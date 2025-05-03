@@ -1,0 +1,62 @@
+version: 1
+applications:
+  - frontend:
+      phases:
+        preBuild:
+          commands:
+            - cd frontend
+            - npm ci
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: frontend/.next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - frontend/node_modules/**/*
+          
+  - backend:
+      phases:
+        preBuild:
+          commands:
+            - cd backend
+            - python -m pip install --upgrade pip
+            - pip install -r requirements.txt
+        build:
+          commands:
+            - python -m pytest
+        postBuild:
+          commands:
+            - echo "Starting FastAPI server"
+      artifacts:
+        baseDirectory: backend
+        files:
+          - '**/*'
+        discard-paths: no
+      cache:
+        paths:
+          - backend/venv/**/*
+
+  - appRoot:
+      phases:
+        build:
+          commands:
+            - echo "Creating start script"
+            - |
+              cat << EOF > start.sh
+              #!/bin/bash
+              # Start the FastAPI backend
+              cd backend
+              gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000 &
+              
+              # Start the Next.js frontend
+              cd ../frontend
+              npm start
+              EOF
+            - chmod +x start.sh
+      artifacts:
+        baseDirectory: /
+        files:
+          - start.sh 

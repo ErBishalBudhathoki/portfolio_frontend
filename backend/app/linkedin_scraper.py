@@ -243,12 +243,12 @@ class LinkedInScraper:
             
             # Navigate to login page with random timing
             self.driver.get("https://www.linkedin.com/login")
-            self.random_sleep(2, 4)
-            
+                    self.random_sleep(2, 4)
+                    
             # Check if we're already logged in
             if "feed" in self.driver.current_url:
                 self.log("Already logged in to LinkedIn")
-                return True
+                        return True
             
             # Get credentials from environment
             email = os.getenv("LINKEDIN_EMAIL")
@@ -261,8 +261,8 @@ class LinkedInScraper:
             # Find login form elements
             try:
                 email_field = WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located((By.ID, "username"))
-                )
+                EC.presence_of_element_located((By.ID, "username"))
+            )
                 password_field = WebDriverWait(self.driver, 10).until(
                     EC.presence_of_element_located((By.ID, "password"))
                 )
@@ -291,16 +291,16 @@ class LinkedInScraper:
             except TimeoutException:
                 self.log("Timeout waiting for sign in button", level="ERROR")
                 self.save_screenshot("signin_button_timeout.png")
-                return False
-            
+                    return False
+                
             # Wait for login to complete with extended timeout
             self.random_sleep(3, 5)
             
             # Check for login challenges
             if not self.handle_login_challenges():
                 self.log("Login challenge detected, may require manual intervention", level="WARNING")
-                return False
-            
+                    return False
+                
             # First try with 60 second timeout
             try:
                 self.log("Attempting login verification with 60 second timeout...")
@@ -328,11 +328,11 @@ class LinkedInScraper:
                         )
                     )
                     self.log("Successfully logged in to LinkedIn after fallback timeout")
-                    return True
-                except TimeoutException:
+                return True
+        except TimeoutException:
                     self.log("Login verification timeout after 30 seconds - login may have failed", level="ERROR")
                     self.save_screenshot("login_verification_timeout.png")
-                    return False
+            return False
                 
         except Exception as e:
             self.log(f"Error during login process: {str(e)}", level="ERROR")
@@ -385,7 +385,7 @@ class LinkedInScraper:
             # Wait for key profile elements with extended timeout
             try:
                 # Wait for any of these elements to confirm profile load
-                WebDriverWait(self.driver, 30).until(
+                    WebDriverWait(self.driver, 30).until(
                     EC.any_of(
                         EC.presence_of_element_located((By.CSS_SELECTOR, ".pv-top-card")),
                         EC.presence_of_element_located((By.CSS_SELECTOR, ".profile-photo-edit__preview")),
@@ -407,7 +407,7 @@ class LinkedInScraper:
             # Final verification
             if "linkedin.com/in/" not in self.driver.current_url:
                 self.log("Not on a valid LinkedIn profile page", level="ERROR")
-                return False
+                    return False
             
             self.log("Successfully navigated to profile")
             return True
@@ -424,7 +424,7 @@ class LinkedInScraper:
             self.log("Starting profile data extraction...")
             
             # Initialize profile data structure
-            profile_data = {
+        profile_data = {
                 "basic_info": {},
                 "about": "",
                 "experience": [],
@@ -478,8 +478,8 @@ class LinkedInScraper:
                 self.log("Warning: Extracted profile data may be incomplete", level="WARNING")
             
             self.log("Profile data extraction completed")
-            return profile_data
-            
+        return profile_data
+    
         except Exception as e:
             self.log(f"Critical error during profile data extraction: {str(e)}", level="ERROR")
             self.log(f"Stack trace: {traceback.format_exc()}", level="DEBUG")
@@ -546,9 +546,9 @@ class LinkedInScraper:
                 try:
                     name_element = self.driver.find_element(By.CSS_SELECTOR, selector)
                     if name_element.text.strip():
-                        basic_info["name"] = name_element.text.strip()
+                basic_info["name"] = name_element.text.strip()
                         break
-                except:
+            except:
                     continue
             
             # Extract headline with fallback selectors
@@ -561,9 +561,9 @@ class LinkedInScraper:
                 try:
                     headline_element = self.driver.find_element(By.CSS_SELECTOR, selector)
                     if headline_element.text.strip():
-                        basic_info["headline"] = headline_element.text.strip()
+                basic_info["headline"] = headline_element.text.strip()
                         break
-                except:
+            except:
                     continue
             
             # Extract location with fallback selectors
@@ -576,9 +576,9 @@ class LinkedInScraper:
                 try:
                     location_element = self.driver.find_element(By.CSS_SELECTOR, selector)
                     if location_element.text.strip():
-                        basic_info["location"] = location_element.text.strip()
+                basic_info["location"] = location_element.text.strip()
                         break
-                except:
+            except:
                     continue
             
             # Extract profile image with fallback selectors
@@ -594,7 +594,7 @@ class LinkedInScraper:
                     if image_url:
                         basic_info["profile_image"] = image_url
                         break
-                except:
+            except:
                     continue
             
             # Validate extracted data
@@ -612,7 +612,7 @@ class LinkedInScraper:
         except Exception as e:
             self.log(f"Error extracting basic info: {str(e)}", level="ERROR")
             self.save_screenshot("basic_info_error.png")
-            return basic_info
+        return basic_info
     
     def extract_about_section(self) -> str:
         """Extract about section with enhanced error handling"""
@@ -639,7 +639,7 @@ class LinkedInScraper:
                         if show_more.is_displayed():
                             self.click_element_with_random_delay(show_more)
                             self.random_sleep(1, 2)
-                    except:
+                except:
                         pass
                     
                     # Get the text content
@@ -653,7 +653,7 @@ class LinkedInScraper:
             
         except Exception as e:
             self.log(f"Error extracting about section: {str(e)}", level="WARNING")
-            return ""
+        return ""
     
     def extract_experience(self) -> List[Dict[str, str]]:
         """Extract experience section with enhanced error handling"""
@@ -701,47 +701,47 @@ class LinkedInScraper:
                     try:
                         title_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__summary-info h3")
                         experience_data["title"] = title_element.text.strip()
-                    except:
+                        except:
                         pass
-                    
+                        
                     # Extract company
-                    try:
+                        try:
                         company_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__secondary-title")
                         experience_data["company"] = company_element.text.strip()
-                    except:
+                        except:
                         pass
-                    
+                        
                     # Extract duration
-                    try:
+                        try:
                         duration_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__date-range span:not(.visually-hidden)")
                         experience_data["duration"] = duration_element.text.strip()
-                    except:
+                        except:
                         pass
-                    
+                        
                     # Extract location
-                    try:
+                        try:
                         location_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__location span:not(.visually-hidden)")
                         experience_data["location"] = location_element.text.strip()
-                    except:
+                        except:
                         pass
-                    
+                        
                     # Extract description
-                    try:
+                        try:
                         description_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__description")
                         experience_data["description"] = description_element.text.strip()
-                    except:
+                        except:
                         pass
                     
                     # Only add entries that have at least title and company
                     if experience_data["title"] and experience_data["company"]:
                         experience_list.append(experience_data)
                     
-                except Exception as e:
+                    except Exception as e:
                     self.log(f"Error extracting individual experience entry: {str(e)}", level="DEBUG")
-                    continue
+                        continue
             
             return experience_list
-            
+        
         except Exception as e:
             self.log(f"Error extracting experience section: {str(e)}", level="WARNING")
             self.save_screenshot("experience_error.png")
@@ -793,47 +793,47 @@ class LinkedInScraper:
                     try:
                         school_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__school-name")
                         education_data["school"] = school_element.text.strip()
-                    except:
+                        except:
                         pass
                     
                     # Extract degree
-                    try:
+                            try:
                         degree_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__degree-name .pv-entity__comma-item")
                         education_data["degree"] = degree_element.text.strip()
-                    except:
+                            except:
                         pass
-                    
+                        
                     # Extract field of study
-                    try:
+                        try:
                         field_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__fos .pv-entity__comma-item")
                         education_data["field_of_study"] = field_element.text.strip()
-                    except:
+                        except:
                         pass
-                    
+                        
                     # Extract date range
-                    try:
+                        try:
                         date_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__dates time")
                         education_data["date_range"] = date_element.text.strip()
-                    except:
+                        except:
                         pass
-                    
+                        
                     # Extract description
-                    try:
+                        try:
                         desc_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__description")
                         education_data["description"] = desc_element.text.strip()
-                    except:
+                        except:
                         pass
                     
                     # Only add entries that have at least a school name
                     if education_data["school"]:
                         education_list.append(education_data)
-                    
-                except Exception as e:
+                        
+                    except Exception as e:
                     self.log(f"Error extracting individual education entry: {str(e)}", level="DEBUG")
-                    continue
+                        continue
             
             return education_list
-            
+        
         except Exception as e:
             self.log(f"Error extracting education section: {str(e)}", level="WARNING")
             self.save_screenshot("education_error.png")
@@ -888,8 +888,8 @@ class LinkedInScraper:
                             ".pv-skill-category-entity__skill-wrapper span"
                         )
                         skill_data["name"] = name_element.text.strip()
-                    except:
-                        continue
+                        except:
+                            continue
                     
                     # Extract endorsements
                     try:
@@ -899,7 +899,7 @@ class LinkedInScraper:
                         )
                         endorsements_text = endorsement_element.text.strip()
                         skill_data["endorsements"] = int(endorsements_text) if endorsements_text.isdigit() else 0
-                    except:
+                except:
                         pass
                     
                     # Extract category if available
@@ -953,9 +953,9 @@ class LinkedInScraper:
                                     "span.mr1.t-bold span, span.hoverable-link-text"
                                 )
                                 project_data["name"] = name_element.text.strip()
-                            except:
+                                        except:
                                 continue
-                            
+                        
                             # Extract date range
                             try:
                                 date_element = entry.find_element(By.CSS_SELECTOR, 
@@ -980,14 +980,14 @@ class LinkedInScraper:
                                     "a.optional-action-target-wrapper, a[data-field='projects_url']"
                                 )
                                 project_data["url"] = url_element.get_attribute("href")
-                            except:
-                                pass
-                            
+                except:
+                    pass
+            
                             # Only add projects that have a name
                             if project_data["name"]:
                                 projects_list.append(project_data)
-                            
-                        except Exception as e:
+        
+        except Exception as e:
                             self.log(f"Error extracting individual project: {str(e)}", level="DEBUG")
                             continue
                     
@@ -1055,40 +1055,40 @@ class LinkedInScraper:
                     try:
                         name_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__title")
                         project_data["name"] = name_element.text.strip()
-                    except:
+                        except:
                         continue
-                    
+                        
                     # Extract date range
-                    try:
+                        try:
                         date_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__date-range span:not(.visually-hidden)")
                         project_data["date_range"] = date_element.text.strip()
-                    except:
+                        except:
                         pass
-                    
+                        
                     # Extract description
-                    try:
+                        try:
                         desc_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__description")
                         project_data["description"] = desc_element.text.strip()
-                    except:
+                        except:
                         pass
-                    
+                        
                     # Extract URL if available
-                    try:
+                        try:
                         url_element = entry.find_element(By.CSS_SELECTOR, "a.pv-entity__url")
                         project_data["url"] = url_element.get_attribute("href")
-                    except:
+                        except:
                         pass
                     
                     # Only add projects that have a name
                     if project_data["name"]:
                         projects_list.append(project_data)
                     
-                except Exception as e:
+                    except Exception as e:
                     self.log(f"Error extracting individual project: {str(e)}", level="DEBUG")
-                    continue
+                        continue
             
             return projects_list
-            
+        
         except Exception as e:
             self.log(f"Error in fallback projects extraction: {str(e)}", level="WARNING")
             return []
@@ -1151,40 +1151,40 @@ class LinkedInScraper:
                     try:
                         org_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__subtitle")
                         certification_data["organization"] = org_element.text.strip()
-                    except:
+                        except:
                         pass
-                    
+                        
                     # Extract issue date
-                    try:
+                        try:
                         issue_date_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__date-range time")
                         certification_data["issue_date"] = issue_date_element.text.strip()
-                    except:
+                        except:
                         pass
-                    
+                        
                     # Extract credential ID
-                    try:
+                        try:
                         cred_id_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__credential-id")
                         certification_data["credential_id"] = cred_id_element.text.replace("Credential ID", "").strip()
-                    except:
+                        except:
                         pass
-                    
+                        
                     # Extract credential URL
-                    try:
+                        try:
                         url_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__credential-url a")
                         certification_data["credential_url"] = url_element.get_attribute("href")
-                    except:
+                        except:
                         pass
                     
                     # Only add certifications that have a name
                     if certification_data["name"]:
                         certifications_list.append(certification_data)
                     
-                except Exception as e:
+                    except Exception as e:
                     self.log(f"Error extracting individual certification: {str(e)}", level="DEBUG")
-                    continue
+                        continue
             
             return certifications_list
-            
+        
         except Exception as e:
             self.log(f"Error extracting certifications section: {str(e)}", level="WARNING")
             self.save_screenshot("certifications_error.png")
@@ -1216,25 +1216,25 @@ class LinkedInScraper:
             self.notifier.notify_scrape_start(profile_url)
             print("✅ Start notification sent")
             
-            # Login to LinkedIn
-            if not self.login_to_linkedin():
+                # Login to LinkedIn
+                if not self.login_to_linkedin():
                 error_msg = "Failed to login to LinkedIn"
                 self.log(error_msg, level="ERROR")
                 print("Sending error notification...")
                 self.notifier.notify_scrape_error(error_msg)
                 print("✅ Error notification sent")
                 return get_fallback_profile_data(error_msg)
-            
-            # Navigate to the profile
-            if not self.navigate_to_profile(profile_url):
+                
+                # Navigate to the profile
+                if not self.navigate_to_profile(profile_url):
                 error_msg = "Failed to navigate to profile"
                 self.log(error_msg, level="ERROR")
                 print("Sending error notification...")
                 self.notifier.notify_scrape_error(error_msg)
                 print("✅ Error notification sent")
                 return get_fallback_profile_data(error_msg)
-            
-            # Extract profile data
+                
+                # Extract profile data
             try:
                 profile_data = self.extract_profile_data()
                 
@@ -1243,7 +1243,7 @@ class LinkedInScraper:
                 
                 if not is_fallback:
                     # Only save to file if it's not fallback data
-                    self.save_data_to_file(profile_data)
+                self.save_data_to_file(profile_data)
                     self.log("Profile data saved to file")
                 else:
                     self.log("Using fallback data - skipping file save to preserve manual edits", level="WARNING")
@@ -1266,7 +1266,7 @@ class LinkedInScraper:
                 self.notifier.notify_scrape_error(error_msg)
                 print("✅ Error notification sent")
                 return get_fallback_profile_data(f"Error during scraping: {str(e)}")
-            
+                
         except Exception as e:
             error_msg = f"Critical error in scrape function: {e}"
             self.log(error_msg, level="ERROR")
@@ -1597,10 +1597,10 @@ async def scrape_linkedin_profile() -> Dict[str, Any]:
         # Only add skills categorization and update Google Sheets if not fallback data
         if not is_fallback:
             print("Successfully scraped real profile data")
-            # Additional categorization of skills
-            if profile_data.get("skills") and len(profile_data["skills"]) > 0:
+        # Additional categorization of skills
+        if profile_data.get("skills") and len(profile_data["skills"]) > 0:
                 print(f"Categorizing {len(profile_data['skills'])} skills...")
-                profile_data["skills_by_category"] = categorize_skills([skill["name"] for skill in profile_data["skills"]])
+            profile_data["skills_by_category"] = categorize_skills([skill["name"] for skill in profile_data["skills"]])
             print("Profile data processing complete")
         else:
             print("Using fallback data - skipping additional processing")
