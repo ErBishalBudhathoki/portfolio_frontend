@@ -110,7 +110,7 @@ class LinkedInScraper:
         """Set up Chrome WebDriver with appropriate options"""
         try:
             logger.info("Setting up Chrome WebDriver...")
-            chrome_options = Options()
+        chrome_options = Options()
             if headless:
                 chrome_options.add_argument('--headless')
             
@@ -124,11 +124,11 @@ class LinkedInScraper:
             
             # Add user agent
             chrome_options.add_argument('--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36')
-            
+        
             # Exclude automation info from navigator
-            chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
             chrome_options.add_experimental_option('useAutomationExtension', False)
-            
+        
             # Use webdriver-manager to handle driver installation
             service = Service(ChromeDriverManager().install())
             self.driver = webdriver.Chrome(service=service, options=chrome_options)
@@ -238,9 +238,9 @@ class LinkedInScraper:
     
     def login_to_linkedin(self) -> bool:
         """Log in to LinkedIn with enhanced anti-detection measures"""
-        try:
+                try:
             self.log("Attempting to log in to LinkedIn...")
-            
+                    
             # Navigate to login page with random timing
             self.driver.get("https://www.linkedin.com/login")
                     self.random_sleep(2, 4)
@@ -422,7 +422,7 @@ class LinkedInScraper:
         """Extract profile data with enhanced error handling and logging"""
         try:
             self.log("Starting profile data extraction...")
-            
+        
             # Initialize profile data structure
         profile_data = {
                 "basic_info": {},
@@ -558,7 +558,7 @@ class LinkedInScraper:
                 ".pv-top-card .text-body-medium"
             ]
             for selector in headline_selectors:
-                try:
+            try:
                     headline_element = self.driver.find_element(By.CSS_SELECTOR, selector)
                     if headline_element.text.strip():
                 basic_info["headline"] = headline_element.text.strip()
@@ -573,7 +573,7 @@ class LinkedInScraper:
                 ".pv-top-card .text-body-small"
             ]
             for selector in location_selectors:
-                try:
+            try:
                     location_element = self.driver.find_element(By.CSS_SELECTOR, selector)
                     if location_element.text.strip():
                 basic_info["location"] = location_element.text.strip()
@@ -588,7 +588,7 @@ class LinkedInScraper:
                 ".pv-top-card .presence-entity__image"
             ]
             for selector in image_selectors:
-                try:
+            try:
                     image_element = self.driver.find_element(By.CSS_SELECTOR, selector)
                     image_url = image_element.get_attribute("src")
                     if image_url:
@@ -628,7 +628,7 @@ class LinkedInScraper:
             
             about_text = ""
             for selector in about_selectors:
-                try:
+            try:
                     about_element = WebDriverWait(self.driver, 5).until(
                         EC.presence_of_element_located((By.CSS_SELECTOR, selector))
                     )
@@ -685,10 +685,10 @@ class LinkedInScraper:
             # Find all experience entries
             experience_entries = self.driver.find_elements(By.CSS_SELECTOR, 
                 ".experience-section .pv-entity__position-group, .experience-section .pv-profile-section__card-item"
-            )
-            
+                )
+                
             for entry in experience_entries:
-                try:
+                    try:
                     experience_data = {
                         "title": "",
                         "company": "",
@@ -696,9 +696,9 @@ class LinkedInScraper:
                         "location": "",
                         "description": ""
                     }
-                    
+                        
                     # Extract title
-                    try:
+                        try:
                         title_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__summary-info h3")
                         experience_data["title"] = title_element.text.strip()
                         except:
@@ -731,7 +731,7 @@ class LinkedInScraper:
                         experience_data["description"] = description_element.text.strip()
                         except:
                         pass
-                    
+                        
                     # Only add entries that have at least title and company
                     if experience_data["title"] and experience_data["company"]:
                         experience_list.append(experience_data)
@@ -777,10 +777,10 @@ class LinkedInScraper:
             # Find all education entries
             education_entries = self.driver.find_elements(By.CSS_SELECTOR, 
                 ".education-section .pv-profile-section__list-item"
-            )
-            
+                )
+                
             for entry in education_entries:
-                try:
+                    try:
                     education_data = {
                         "school": "",
                         "degree": "",
@@ -788,9 +788,9 @@ class LinkedInScraper:
                         "date_range": "",
                         "description": ""
                     }
-                    
+                        
                     # Extract school name
-                    try:
+                        try:
                         school_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__school-name")
                         education_data["school"] = school_element.text.strip()
                         except:
@@ -823,7 +823,7 @@ class LinkedInScraper:
                         education_data["description"] = desc_element.text.strip()
                         except:
                         pass
-                    
+                        
                     # Only add entries that have at least a school name
                     if education_data["school"]:
                         education_list.append(education_data)
@@ -874,7 +874,7 @@ class LinkedInScraper:
             )
             
             for entry in skill_entries:
-                try:
+                        try:
                     skill_data = {
                         "name": "",
                         "endorsements": 0,
@@ -903,7 +903,7 @@ class LinkedInScraper:
                         pass
                     
                     # Extract category if available
-                    try:
+            try:
                         category_element = entry.find_element(By.CSS_SELECTOR, ".pv-skill-category-entity__category-info")
                         skill_data["category"] = category_element.text.strip()
                     except:
@@ -939,7 +939,7 @@ class LinkedInScraper:
                     )
                     
                     for entry in project_entries:
-                        try:
+                            try:
                             project_data = {
                                 "name": "",
                                 "date_range": "",
@@ -997,7 +997,7 @@ class LinkedInScraper:
                         
                 except Exception as e:
                     self.log(f"Error extracting projects from dedicated page: {str(e)}", level="WARNING")
-            
+        
             # If direct navigation failed or no projects found, fall back to the original method
             self.log("Falling back to original projects extraction method")
             return self._extract_projects_fallback()
@@ -1040,19 +1040,19 @@ class LinkedInScraper:
             # Find all project entries
             project_entries = self.driver.find_elements(By.CSS_SELECTOR, 
                 ".projects-section .pv-project-entity"
-            )
-            
+                )
+                
             for entry in project_entries:
-                try:
+                    try:
                     project_data = {
                         "name": "",
                         "date_range": "",
                         "description": "",
                         "url": ""
                     }
-                    
+                        
                     # Extract project name
-                    try:
+                        try:
                         name_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__title")
                         project_data["name"] = name_element.text.strip()
                         except:
@@ -1078,7 +1078,7 @@ class LinkedInScraper:
                         project_data["url"] = url_element.get_attribute("href")
                         except:
                         pass
-                    
+                        
                     # Only add projects that have a name
                     if project_data["name"]:
                         projects_list.append(project_data)
@@ -1127,10 +1127,10 @@ class LinkedInScraper:
             # Find all certification entries
             certification_entries = self.driver.find_elements(By.CSS_SELECTOR, 
                 ".certifications-section .pv-certification-entity"
-            )
-            
+                )
+                
             for entry in certification_entries:
-                try:
+                    try:
                     certification_data = {
                         "name": "",
                         "organization": "",
@@ -1139,9 +1139,9 @@ class LinkedInScraper:
                         "credential_id": "",
                         "credential_url": ""
                     }
-                    
+                        
                     # Extract certification name
-                    try:
+                        try:
                         name_element = entry.find_element(By.CSS_SELECTOR, ".pv-entity__title")
                         certification_data["name"] = name_element.text.strip()
                     except:
@@ -1174,7 +1174,7 @@ class LinkedInScraper:
                         certification_data["credential_url"] = url_element.get_attribute("href")
                         except:
                         pass
-                    
+                        
                     # Only add certifications that have a name
                     if certification_data["name"]:
                         certifications_list.append(certification_data)
