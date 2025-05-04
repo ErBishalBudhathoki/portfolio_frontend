@@ -1,160 +1,229 @@
 # Portfolio Website
 
-A professional portfolio website with LinkedIn profile integration, Google Sheets-based blog system, and contact form.
-
-## Features
-
-- Dynamic data fetching from LinkedIn profile
-- Blog content managed through Google Sheets
-- Responsive design with dark/light mode
-- Project showcase with descriptions and technologies
-- Skills visualization by category
-- Contact form with Google Sheets backend
+A professional portfolio website with a FastAPI backend for LinkedIn profile scraping and a Next.js frontend for displaying the portfolio.
 
 ## Project Structure
 
-The project is divided into two main parts:
-
-- **Backend**: Python-based FastAPI service that handles data fetching and caching
-- **Frontend**: Next.js application with React and Tailwind CSS
+```
+├── backend/           # FastAPI backend application
+│   ├── app/           # Application code
+│   ├── data/          # Scraped data storage
+│   ├── credentials/   # Credentials for external APIs
+│   ├── Dockerfile     # Docker configuration
+│   ├── requirements.txt # Python dependencies
+│   ├── run.py         # Application entry point
+│   └── setup.sh       # Local setup script
+│
+├── frontend/          # Next.js frontend application
+│   ├── components/    # React components
+│   ├── pages/         # Next.js pages
+│   ├── public/        # Static assets
+│   ├── styles/        # CSS styles
+│   ├── Dockerfile     # Docker configuration
+│   └── package.json   # Node.js dependencies
+│
+├── docker-compose.yml # Docker Compose configuration
+└── start.sh           # Script to start both services
+```
 
 ## Getting Started
 
-### Prerequisites
+### Option 1: Using Docker (Recommended)
 
-- Node.js 18+ 
-- Python 3.8+
-- Google Sheets API credentials (provided in the credentials folder)
-
-### Setup Guide
-
-#### 1. Clone the Repository
+1. Make sure you have Docker and Docker Compose installed
+2. Clone this repository
+3. Start the application:
 
 ```bash
-git clone <repository-url>
-cd portf
+docker-compose up
 ```
 
-#### 2. Set Up Environment Variables
+4. Access:
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8000
+   - API Documentation: http://localhost:8000/docs
 
-Both the frontend and backend need their own environment variables.
+### Option 2: Local Development
 
-**Backend Environment Setup**:
+#### Backend Setup
 
-The backend already has the `.env` file configured with:
-- LinkedIn profile URL
-- Google Sheet ID (1blqFnWjYgB1idiYqqEZR5qfueO0k6vPZv4eP8Yn3xTg)
-- API configuration
+1. Create a virtual environment:
+   ```
+   python -m venv venv
+   ```
 
-**Frontend Environment Setup**:
+2. Activate the virtual environment:
+   - On macOS/Linux:
+     ```
+     source venv/bin/activate
+     ```
+   - On Windows:
+     ```
+     venv\Scripts\activate
+     ```
 
-The frontend already has the `.env.local` file configured with:
-- API URL (http://localhost:8000)
-- Site name and description
+3. Install the dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
 
-#### 3. Google Sheets Credentials
+4. For development, you can also install development dependencies:
+   ```
+   pip install -r requirements-dev.txt
+   ```
 
-The service account credentials are already configured in the `backend/credentials/google_credentials.json` file.
+5. Set up environment variables:
+   Create a `.env` file in the backend directory with the following variables:
+   ```
+   GOOGLE_SHEETS_CREDENTIALS=your_google_sheets_credentials_json
+   LINKEDIN_PASSWORD=your_linkedin_password
+   ```
 
-#### 4. Install Dependencies
+6. Run the application:
+   ```
+   python run_local.py
+   ```
+   or
+   ```
+   ./run_local.py
+   ```
 
-**Backend Dependencies**:
-
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-**Frontend Dependencies**:
+#### Frontend Setup
 
 ```bash
 cd frontend
 npm install
-```
-
-#### 5. Start the Application
-
-You can start both the backend and frontend with a single command:
-
-```bash
-# From the project root directory
-chmod +x start.sh  # Make the script executable (only needed once)
-./start.sh
-```
-
-Or start them individually:
-
-**Start the Backend**:
-
-```bash
-cd backend
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-python run.py
-```
-
-**Start the Frontend**:
-
-```bash
-cd frontend
 npm run dev
 ```
 
-#### 6. Access the Application
+## Features
 
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
+- 🔍 LinkedIn profile scraping
+- 📊 Portfolio showcase
+- 📝 Blog integration
+- 📫 Contact form
 
-## Contact Form Functionality
+## Environment Variables
 
-The contact form on the website submits data to the backend API at `/api/contact`. The submissions are automatically saved to a designated sheet in the Google Spreadsheet.
+### Backend (.env)
 
-## LinkedIn Profile Data
+```
+STAGE=dev
+HOST=0.0.0.0
+PORT=8000
+LINKEDIN_USERNAME=your_username
+LINKEDIN_PASSWORD=your_password
+```
 
-The portfolio shows data from a LinkedIn profile. This data is fetched from the backend API, which scrapes the LinkedIn profile or retrieves cached data. The data is also saved to the Google Spreadsheet for backup and easy management.
+### Frontend (.env.local)
 
-## Blog Integration
+```
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
 
-Blog posts are managed through the Google Sheet. To add or edit blog posts:
+## Cleaning Up
 
-1. Access the Google Sheet with ID: `1blqFnWjYgB1idiYqqEZR5qfueO0k6vPZv4eP8Yn3xTg`
-2. Update the blog posts in the appropriate sheet
-3. The changes will be reflected in the website automatically
+To clean up AWS deployment files:
 
-## Troubleshooting
+```bash
+cd backend
+./cleanup.sh
+```
 
-### Google Sheets API Issues
+# Portfolio Backend
 
-If you encounter an error related to Google Sheets API:
+This is the backend for the portfolio application, built with FastAPI.
 
-1. Verify that the Google Sheets API is enabled in your Google Cloud project
-2. Check that the service account has "Editor" access to the spreadsheet
-3. Confirm that the `credentials/google_credentials.json` file contains valid credentials
+## Local Development Setup
 
-### LinkedIn Scraping Issues
+1. Create a virtual environment:
+   ```
+   python -m venv venv
+   ```
 
-LinkedIn scraping might fail due to:
-- Rate limiting
-- LinkedIn UI changes
-- Authentication issues
+2. Activate the virtual environment:
+   - On macOS/Linux:
+     ```
+     source venv/bin/activate
+     ```
+   - On Windows:
+     ```
+     venv\Scripts\activate
+     ```
 
-If scraping fails, the system will use cached data from the last successful scrape.
+3. Install the dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
 
-## Technologies Used
+4. For development, you can also install development dependencies:
+   ```
+   pip install -r requirements-dev.txt
+   ```
 
-### Backend
-- Python 3.8+
-- FastAPI
-- Google Sheets API
-- LinkedIn scraping libraries
+5. Set up environment variables:
+   Create a `.env` file in the backend directory with the following variables:
+   ```
+   GOOGLE_SHEETS_CREDENTIALS=your_google_sheets_credentials_json
+   LINKEDIN_PASSWORD=your_linkedin_password
+   ```
+
+## Running the Application
+
+To run the application locally:
+
+```
+python run_local.py
+```
+
+or
+
+```
+./run_local.py
+```
+
+The API will be available at http://localhost:8000
+
+## API Endpoints
+
+- `/linkedin/profile/{profile_url}`: Scrape and return LinkedIn profile data
+- `/sheets/update/{profile_url}`: Update Google Sheets with LinkedIn profile data
+
+## Development
+
+For development, the application uses hot-reloading, so any changes to the code will automatically reload the application.
+
+## Recent Updates
+
+### LinkedIn Scraper Fixes (May 2023)
+
+The LinkedIn scraper has been upgraded with better Chrome and ChromeDriver handling for improved reliability:
+
+- **Robust Chrome Configuration**: Updated Chrome options to work better in headless and containerized environments
+- **Multiple Driver Setup Methods**: The scraper now tries several methods to initialize the Chrome driver, making it more resilient
+- **Enhanced Error Handling**: Better error recovery with fallback data if scraping fails
+- **Diagnostic Tools**: Added a new test script (`test_selenium.py`) to diagnose environment issues
+- **Cloud Run Compatibility**: Improved Docker configuration for Google Cloud Run
+
+To test your environment for LinkedIn scraping compatibility, run:
+
+```bash
+cd backend
+python test_selenium.py
+```
+
+## Architecture
 
 ### Frontend
-- Next.js 14
-- React
-- Tailwind CSS
-- shadcn/ui components
+- **Framework**: Next.js with TypeScript
+- **Styling**: Tailwind CSS
+- **Hosting**: Google Cloud Run
 
-## License
+### Backend
+- **Framework**: FastAPI
+- **Data Storage**: Google Sheets API
+- **Hosting**: Google Cloud Run
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+## Setup Instructions
+
+// ... existing code ... 

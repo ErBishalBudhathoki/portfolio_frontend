@@ -17,12 +17,20 @@ import asyncio
 # Load environment variables
 load_dotenv()
 
-app = FastAPI(title="Portfolio API")
+app = FastAPI(
+    title="Portfolio API"
+)
 
-# Configure CORS
+# Configure CORS with specific origins
+allowed_origins = [
+    "https://www.bishalbudhathoki.com",
+    "https://bishalbudhathoki.com",
+    "http://localhost:3000"  # For local development
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -490,12 +498,172 @@ async def submit_contact_form(submission: ContactFormSubmission):
 # Add startup event to ensure sheets exist on app startup
 @app.on_event("startup")
 async def startup_event():
-    """Run on app startup to ensure required resources exist"""
+    """Run initialization tasks when the app starts"""
     try:
-        contact_sheet = await ensure_contact_sheet_exists()
-        linkedin_sheet = await ensure_linkedin_sheet_exists()
-        blog_sheet = await ensure_blog_sheet_exists()
-        manual_blog_sheet = await ensure_manual_blog_sheet_exists()
-        print(f"Startup check - Contact sheet exists: {contact_sheet}, LinkedIn sheets exist: {linkedin_sheet}, Blog sheet exists: {blog_sheet}, Manual blog sheet exists: {manual_blog_sheet}")
+        print("=========================================")
+        print("Starting up Portfolio Backend API...")
+        print("=========================================")
+        
+        # Make data directory if it doesn't exist
+        os.makedirs(os.path.dirname(LINKEDIN_DATA_PATH), exist_ok=True)
+        print(f"Data directory ensured at: {os.path.dirname(LINKEDIN_DATA_PATH)}")
+        
+        # Setup Google Sheets access
+        print("Initializing Google Sheets access...")
+        try:
+            service = await setup_sheets_service()
+            if service:
+                print("✅ Google Sheets service initialized successfully")
+            else:
+                print("⚠️ Google Sheets service initialization returned None")
+        except Exception as sheets_error:
+            print(f"⚠️ Error initializing Google Sheets: {str(sheets_error)}")
+        
+        # Ensure required sheets exist
+        print("Checking required Google Sheets...")
+        try:
+            # Create blog sheets if they don't exist
+            blog_sheet_exists = await ensure_blog_sheet_exists()
+            blog_sheet_result = {
+                "success": blog_sheet_exists,
+                "message": "Blog sheet exists" if blog_sheet_exists else "Failed to create blog sheet"
+            }
+            if blog_sheet_result["success"]:
+                print(f"✅ Blog sheet ready: {blog_sheet_result['message']}")
+            else:
+                print(f"⚠️ Blog sheet issue: {blog_sheet_result['message']}")
+                
+            manual_blog_exists = await ensure_manual_blog_sheet_exists()
+            manual_blog_result = {
+                "success": manual_blog_exists,
+                "message": "Manual blog sheet exists" if manual_blog_exists else "Failed to create manual blog sheet"
+            }
+            if manual_blog_result["success"]:
+                print(f"✅ Manual blog sheet ready: {manual_blog_result['message']}")
+            else:
+                print(f"⚠️ Manual blog sheet issue: {manual_blog_result['message']}")
+            
+            # Create LinkedIn sheet if it doesn't exist
+            try:
+                linkedin_sheet_result = await ensure_linkedin_sheet_exists()
+                if linkedin_sheet_result.get("success", False):
+                    print(f"✅ LinkedIn sheet ready: {linkedin_sheet_result.get('message')}")
+                else:
+                    print(f"⚠️ LinkedIn sheet issue: {linkedin_sheet_result.get('message')}")
+            except Exception as linkedin_error:
+                print(f"⚠️ LinkedIn sheet error: {str(linkedin_error)}")
+            
+            # Create contact form sheet if it doesn't exist
+            contact_sheet_result = await ensure_contact_sheet_exists()
+            if contact_sheet_result.get("success", False):
+                print(f"✅ Contact form sheet ready: {contact_sheet_result.get('message')}")
+            else:
+                print(f"⚠️ Contact form sheet issue: {contact_sheet_result.get('message')}")
+                
+        except Exception as sheet_error:
+            print(f"⚠️ Error setting up required sheets: {str(sheet_error)}")
+        
+        # Start listening for Telegram messages
+        print("Starting Telegram bot listener...")
+        try:
+            loop = asyncio.get_event_loop()
+            loop.create_task(notifier.listen_for_messages())
+            print("✅ Telegram bot listener started successfully")
+        except Exception as telegram_error:
+            print(f"⚠️ Error starting Telegram bot: {str(telegram_error)}")
+            
+        print("=========================================")
+        print("Portfolio Backend API startup complete")
+        print("=========================================")
     except Exception as e:
-        print(f"Warning: Failed to initialize sheets: {e}") 
+        print(f"❌ CRITICAL ERROR during startup: {str(e)}")
+
+@app.get("/health", tags=["Health"])
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "ok", "timestamp": datetime.now().isoformat()}
+
+@app.get("/diagnose-selenium", tags=["Diagnostics"])
+async def diagnose_selenium():
+    """Diagnostic endpoint to check Selenium and Chrome setup"""
+    import sys
+    import platform
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+    import os
+    import json
+    
+    results = {
+        "system": {
+            "platform": platform.platform(),
+            "python_version": sys.version,
+            "selenium_version": webdriver.__version__
+        },
+        "environment": {
+            "path": os.environ.get("PATH", "Not available"),
+            "current_directory": os.getcwd()
+        },
+        "tests": {}
+    }
+    
+    # Test if Chrome is available
+    try:
+        chrome_output = os.popen("google-chrome --version").read().strip()
+        results["tests"]["chrome_installed"] = True
+        results["tests"]["chrome_version"] = chrome_output
+    except Exception as e:
+        results["tests"]["chrome_installed"] = False
+        results["tests"]["chrome_error"] = str(e)
+    
+    # Test if ChromeDriver is available
+    try:
+        chromedriver_output = os.popen("chromedriver --version").read().strip()
+        results["tests"]["chromedriver_installed"] = True
+        results["tests"]["chromedriver_version"] = chromedriver_output
+    except Exception as e:
+        results["tests"]["chromedriver_installed"] = False
+        results["tests"]["chromedriver_error"] = str(e)
+    
+    # Test if Selenium can create a Chrome driver
+    try:
+        options = Options()
+        options.add_argument("--headless=new")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        
+        driver = webdriver.Chrome(options=options)
+        results["tests"]["selenium_driver_creation"] = "success"
+        
+        # Try to fetch a test page
+        driver.get("https://www.google.com")
+        results["tests"]["selenium_navigation"] = "success"
+        results["tests"]["page_title"] = driver.title
+        
+        driver.quit()
+    except Exception as e:
+        results["tests"]["selenium_driver_creation"] = "failed"
+        results["tests"]["selenium_error"] = str(e)
+    
+    # Try alternative method with webdriver_manager
+    if results["tests"].get("selenium_driver_creation") == "failed":
+        try:
+            from webdriver_manager.chrome import ChromeDriverManager
+            from selenium.webdriver.chrome.service import Service
+            
+            service = Service(ChromeDriverManager().install())
+            driver = webdriver.Chrome(service=service, options=options)
+            results["tests"]["webdriver_manager_creation"] = "success"
+            
+            driver.get("https://www.google.com")
+            results["tests"]["webdriver_manager_navigation"] = "success"
+            
+            driver.quit()
+        except Exception as e:
+            results["tests"]["webdriver_manager_creation"] = "failed"
+            results["tests"]["webdriver_manager_error"] = str(e)
+    
+    return results
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000) 
