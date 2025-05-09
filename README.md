@@ -1,229 +1,65 @@
-# Portfolio Website
+# Portfolio Project
 
-A professional portfolio website with a FastAPI backend for LinkedIn profile scraping and a Next.js frontend for displaying the portfolio.
+Full-stack portfolio website with a Next.js frontend and Python backend, deployed to Google Cloud.
 
 ## Project Structure
 
-```
-├── backend/           # FastAPI backend application
-│   ├── app/           # Application code
-│   ├── data/          # Scraped data storage
-│   ├── credentials/   # Credentials for external APIs
-│   ├── Dockerfile     # Docker configuration
-│   ├── requirements.txt # Python dependencies
-│   ├── run.py         # Application entry point
-│   └── setup.sh       # Local setup script
-│
-├── frontend/          # Next.js frontend application
-│   ├── components/    # React components
-│   ├── pages/         # Next.js pages
-│   ├── public/        # Static assets
-│   ├── styles/        # CSS styles
-│   ├── Dockerfile     # Docker configuration
-│   └── package.json   # Node.js dependencies
-│
-├── docker-compose.yml # Docker Compose configuration
-└── start.sh           # Script to start both services
-```
+- `frontend/` - Next.js 14 frontend with TailwindCSS and TypeScript
+- `backend/` - Python backend API 
 
-## Getting Started
+## Deployment
 
-### Option 1: Using Docker (Recommended)
+### Frontend Deployment
 
-1. Make sure you have Docker and Docker Compose installed
-2. Clone this repository
-3. Start the application:
-
-```bash
-docker-compose up
-```
-
-4. Access:
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8000
-   - API Documentation: http://localhost:8000/docs
-
-### Option 2: Local Development
-
-#### Backend Setup
-
-1. Create a virtual environment:
-   ```
-   python -m venv venv
-   ```
-
-2. Activate the virtual environment:
-   - On macOS/Linux:
-     ```
-     source venv/bin/activate
-     ```
-   - On Windows:
-     ```
-     venv\Scripts\activate
-     ```
-
-3. Install the dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-
-4. For development, you can also install development dependencies:
-   ```
-   pip install -r requirements-dev.txt
-   ```
-
-5. Set up environment variables:
-   Create a `.env` file in the backend directory with the following variables:
-   ```
-   GOOGLE_SHEETS_CREDENTIALS=your_google_sheets_credentials_json
-   LINKEDIN_PASSWORD=your_linkedin_password
-   ```
-
-6. Run the application:
-   ```
-   python run_local.py
-   ```
-   or
-   ```
-   ./run_local.py
-   ```
-
-#### Frontend Setup
+The frontend is deployed to Google Cloud Run using the provided deployment script:
 
 ```bash
 cd frontend
-npm install
-npm run dev
+./deploy.sh
 ```
 
-## Features
+See `frontend/README.md` for more detailed information.
 
-- 🔍 LinkedIn profile scraping
-- 📊 Portfolio showcase
-- 📝 Blog integration
-- 📫 Contact form
+### Utility Scripts
 
-## Environment Variables
+Several utility scripts are included to help manage the project:
 
-### Backend (.env)
+- `cleanup-simple.sh` - Cleans up unused Docker images from Google Container Registry to reduce costs
+- `github-sync.sh` - Comprehensive tool to push the project to GitHub with proper authentication handling
+- `push-to-github.sh` - Simple script to push to GitHub quickly
 
-```
-STAGE=dev
-HOST=0.0.0.0
-PORT=8000
-LINKEDIN_USERNAME=your_username
-LINKEDIN_PASSWORD=your_password
-```
+### GitHub Integration
 
-### Frontend (.env.local)
-
-```
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
-
-## Cleaning Up
-
-To clean up AWS deployment files:
+To push the entire project to GitHub:
 
 ```bash
-cd backend
-./cleanup.sh
+# For a comprehensive guided experience with authentication handling:
+./github-sync.sh
+
+# For a simpler push:
+./push-to-github.sh
 ```
 
-# Portfolio Backend
+The GitHub sync tool will:
+- Initialize git if needed
+- Add and commit all files
+- Configure the remote repository
+- Push to GitHub
+- Handle common authentication issues
+- Provide clear instructions for SSH and HTTPS
 
-This is the backend for the portfolio application, built with FastAPI.
+## Maintenance
 
-## Local Development Setup
-
-1. Create a virtual environment:
-   ```
-   python -m venv venv
-   ```
-
-2. Activate the virtual environment:
-   - On macOS/Linux:
-     ```
-     source venv/bin/activate
-     ```
-   - On Windows:
-     ```
-     venv\Scripts\activate
-     ```
-
-3. Install the dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-
-4. For development, you can also install development dependencies:
-   ```
-   pip install -r requirements-dev.txt
-   ```
-
-5. Set up environment variables:
-   Create a `.env` file in the backend directory with the following variables:
-   ```
-   GOOGLE_SHEETS_CREDENTIALS=your_google_sheets_credentials_json
-   LINKEDIN_PASSWORD=your_linkedin_password
-   ```
-
-## Running the Application
-
-To run the application locally:
-
-```
-python run_local.py
-```
-
-or
-
-```
-./run_local.py
-```
-
-The API will be available at http://localhost:8000
-
-## API Endpoints
-
-- `/linkedin/profile/{profile_url}`: Scrape and return LinkedIn profile data
-- `/sheets/update/{profile_url}`: Update Google Sheets with LinkedIn profile data
-
-## Development
-
-For development, the application uses hot-reloading, so any changes to the code will automatically reload the application.
-
-## Recent Updates
-
-### LinkedIn Scraper Fixes (May 2023)
-
-The LinkedIn scraper has been upgraded with better Chrome and ChromeDriver handling for improved reliability:
-
-- **Robust Chrome Configuration**: Updated Chrome options to work better in headless and containerized environments
-- **Multiple Driver Setup Methods**: The scraper now tries several methods to initialize the Chrome driver, making it more resilient
-- **Enhanced Error Handling**: Better error recovery with fallback data if scraping fails
-- **Diagnostic Tools**: Added a new test script (`test_selenium.py`) to diagnose environment issues
-- **Cloud Run Compatibility**: Improved Docker configuration for Google Cloud Run
-
-To test your environment for LinkedIn scraping compatibility, run:
+To clean up unused Docker images from Google Container Registry:
 
 ```bash
-cd backend
-python test_selenium.py
+./cleanup-simple.sh
 ```
 
-## Architecture
+This helps reduce storage costs in Google Cloud by removing old images while keeping the most recent ones and any images tagged as "express".
 
-### Frontend
-- **Framework**: Next.js with TypeScript
-- **Styling**: Tailwind CSS
-- **Hosting**: Google Cloud Run
+## Documentation
 
-### Backend
-- **Framework**: FastAPI
-- **Data Storage**: Google Sheets API
-- **Hosting**: Google Cloud Run
-
-## Setup Instructions
-
-// ... existing code ... 
+Detailed documentation for each part of the project can be found in:
+- `frontend/README.md` - Frontend documentation
+- `backend/README.md` - Backend documentation

@@ -23,7 +23,7 @@ async def save_linkedin_data_to_sheet(profile_data: Dict[str, Any]) -> Dict[str,
     try:
         # Ensure the sheets exist
         sheet_exists = await ensure_linkedin_sheet_exists()
-        if not sheet_exists:
+        if not sheet_exists["success"]:
             return {
                 "success": False,
                 "message": "Could not set up LinkedIn data sheets"
@@ -339,14 +339,14 @@ async def get_linkedin_data_from_sheet() -> Optional[Dict[str, Any]]:
     """
     try:
         # Set up the Google Sheets service
-        service = setup_sheets_service()
+        service = await setup_sheets_service()
         if not service:
             print("Failed to set up Google Sheets service for LinkedIn data")
             return None
         
         # First ensure the LinkedIn sheets exist
         sheet_exists = await ensure_linkedin_sheet_exists()
-        if not sheet_exists:
+        if not sheet_exists["success"]:
             print("Could not find or create LinkedIn sheet")
             return None
         
@@ -617,14 +617,14 @@ async def get_linkedin_data_from_sheet() -> Optional[Dict[str, Any]]:
         traceback.print_exc()
         return None
 
-async def ensure_linkedin_sheet_exists() -> bool:
+async def ensure_linkedin_sheet_exists():
     """Ensure that all LinkedIn-related sheets exist"""
     try:
         # Set up the Google Sheets service
-        service = setup_sheets_service()
+        service = await setup_sheets_service()
         if not service:
             print("Failed to set up Google Sheets service")
-            return False
+            return {"success": False, "message": "Failed to set up Google Sheets service"}
         
         # Get spreadsheet info to check existing sheets
         try:
@@ -645,11 +645,13 @@ async def ensure_linkedin_sheet_exists() -> bool:
             
             # Track if all required sheets exist
             all_sheets_exist = True
+            created_sheets = []
             
             for sheet_name, headers in required_sheets.items():
                 if sheet_name not in existing_sheets:
                     # Sheet doesn't exist, create it
                     all_sheets_exist = False
+                    created_sheets.append(sheet_name)
                     
                     # Create the sheet
                     requests = [{
@@ -734,20 +736,24 @@ async def ensure_linkedin_sheet_exists() -> bool:
                         ).execute()
                         print(f"Added missing data to existing {sheet_name} sheet")
             
-            return True
+            message = "All LinkedIn sheets verified"
+            if created_sheets:
+                message = f"Created LinkedIn sheets: {', '.join(created_sheets)}"
+            
+            return {"success": True, "message": message}
                 
         except Exception as e:
             print(f"Error checking sheets: {e}")
-            return False
+            return {"success": False, "message": f"Error checking sheets: {str(e)}"}
             
     except Exception as e:
         print(f"Failed to ensure LinkedIn sheets exist: {e}")
-        return False
+        return {"success": False, "message": f"Failed to ensure LinkedIn sheets exist: {str(e)}"}
 
 async def get_cv_url_from_sheet():
     """Get the CV URL directly from the sheet"""
     try:
-        service = setup_sheets_service()
+        service = await setup_sheets_service()
         if not service:
             return None
             

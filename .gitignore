@@ -53,6 +53,9 @@ wheels/
 # Virtual Environment
 venv/
 ENV/
+.venv/
+.virtualenv/
+.python-version
 
 # IDE
 .idea/
@@ -87,9 +90,63 @@ data/
 !package.json
 !package-lock.json
 !tsconfig.json
+!components.json
 
 # Temporary files
 *.tmp
 *.bak
 *.swp
 *~ 
+
+# Deployment backups and artifacts
+backup-deploy-scripts*/
+github-sync-backup*/
+*.secrets
+.gcloud/
+app.yaml.backup
+cloudbuild.bak
+deploy.sh.bak
+.firebase/
+.firebaserc
+
+# Docker development artifacts
+.docker/
+docker-compose.override.yml
+docker-compose.dev.yml
+
+# Google Cloud
+*.key.json
+*-credentials.json
+service-account*.json
+cloud-sql-proxy
+.cloudbuild/
+# Explicitly exclude Google credentials
+backend/credentials/google_credentials.json
+backend/credentials/*.json
+*/google_credentials.json
+*/credentials/*.json
+
+# Build artifacts
+frontend/.output/
+frontend/.nuxt/
+frontend/.nitro/
+backend/.pytest_cache/
+backend/.coverage
+.vercel
+/public/
+
+# OS specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Application specific
+local-docker-deploy.sh.bak
+minimal-package.json
+*.backup
+
+# Certificate files
+*.cert
+*.key
+*.crt
+*.pem 

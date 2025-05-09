@@ -26,7 +26,7 @@ async def save_contact_submission(submission: ContactFormSubmission) -> Dict[str
     """
     try:
         # Set up the Google Sheets service
-        service = setup_sheets_service()
+        service = await setup_sheets_service()
         if not service:
             return {
                 "success": False,
@@ -75,10 +75,10 @@ async def ensure_contact_sheet_exists():
     Check if the contact submissions sheet exists, and create it if it doesn't
     """
     try:
-        service = setup_sheets_service()
+        service = await setup_sheets_service()
         if not service:
             print("Could not set up Google Sheets service")
-            return False
+            return {"success": False, "message": "Could not set up Google Sheets service"}
         
         # First, check if the sheet already exists
         sheet_metadata = service.spreadsheets().get(spreadsheetId=SHEET_ID).execute()
@@ -112,8 +112,8 @@ async def ensure_contact_sheet_exists():
             
             print(f"Created new sheet '{SHEET_NAME}' for contact submissions")
         
-        return True
+        return {"success": True, "message": "Contact form sheet exists"}
     
     except Exception as e:
         print(f"Error ensuring contact sheet exists: {e}")
-        return False 
+        return {"success": False, "message": f"Error ensuring contact sheet exists: {str(e)}"} 

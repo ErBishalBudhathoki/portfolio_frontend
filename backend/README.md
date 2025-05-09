@@ -1,99 +1,80 @@
 # Portfolio Backend
 
-This is the backend service for the developer portfolio website. It provides APIs for LinkedIn profile data and blog posts from Google Sheets.
+FastAPI backend for the portfolio application, providing data from LinkedIn and other sources.
 
 ## Features
 
-- LinkedIn profile scraping (using Selenium)
-- Google Sheets integration for blog posts
-- FastAPI REST endpoints
-- Caching to minimize API calls and scraping
+- LinkedIn profile data integration
+- Google Sheets data storage
+- RESTful API endpoints for frontend consumption
+- Containerized for deployment to Google Cloud Run
+- Telegram notifications for critical events
 
-## Setup
+## Directory Structure
+
+```
+backend/
+├── app/             # Main application code
+├── credentials/     # Authentication credentials (gitignored)
+├── data/            # Cached data files (gitignored)
+├── docs/            # API documentation
+├── scripts/         # Utility scripts for maintenance tasks  
+├── Dockerfile       # Container configuration
+├── env.example      # Template for environment variables
+├── requirements.txt # Production dependencies
+├── run_app.py       # Local development runner script
+└── startup.sh       # Container startup script
+```
+
+## Getting Started
 
 ### Prerequisites
 
 - Python 3.8+
-- Chrome browser (for Selenium)
-- Google API credentials (for Sheets access)
+- pip
+- Docker (for containerized deployment)
 
-### Installation
+### Local Development
 
-1. Create a virtual environment and activate it:
-
+1. Create a virtual environment:
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
 2. Install dependencies:
-
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Set up environment variables:
+3. Copy `env.example` to `.env` and configure your environment variables.
 
+4. Run the application:
 ```bash
-cp env.example .env
-```
-
-Edit the `.env` file with your configuration.
-
-4. Google Sheets API Setup:
-
-To access the Google Sheets API, you need either:
-- A Google API key (simpler but less secure)
-- A service account (recommended for production)
-
-For service account setup:
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project
-3. Enable the Google Sheets API
-4. Create a service account and download the JSON credentials
-5. Place the credentials file at `credentials/google_credentials.json`
-6. Share the Google Sheet with the service account email
-
-### Running the Server
-
-```bash
-python run.py
+python run_app.py
 ```
 
 The API will be available at http://localhost:8000
 
-## Scheduled Scraping
+## API Documentation
 
-To set up automated daily LinkedIn profile scraping:
+Once running, API documentation is available at:
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
 
-### On Linux/Mac (Cron)
+## Deployment
 
-```bash
-crontab -e
-```
+The backend is deployed to Google Cloud Run. See the project's main [DEPLOYMENT.md](../DEPLOYMENT.md) for deployment instructions.
 
-Add the following line to run daily at 1 AM:
+## License
 
-```
-0 1 * * * cd /path/to/backend && source venv/bin/activate && python scripts/scheduled_scraping.py >> logs/scraping.log 2>&1
-```
-
-### On Windows (Task Scheduler)
-
-Create a batch file `scrape.bat`:
-
-```batch
-@echo off
-cd C:\path\to\backend
-call venv\Scripts\activate.bat
-python scripts\scheduled_scraping.py >> logs\scraping.log 2>&1
-```
-
-Then add this batch file to Windows Task Scheduler.
+This project is licensed under the MIT License.
 
 ## API Endpoints
 
-- `GET /`: API status check
-- `GET /api/profile`: Get LinkedIn profile data
-- `GET /api/blog`: Get blog posts from Google Sheet
-- `POST /api/trigger-linkedin-scrape`: Manually trigger LinkedIn scraping 
+- `/linkedin/profile/{profile_url}`: Scrape and return LinkedIn profile data
+- `/sheets/update/{profile_url}`: Update Google Sheets with LinkedIn profile data
+
+## Development
+
+For development, the application uses hot-reloading, so any changes to the code will automatically reload the application. 

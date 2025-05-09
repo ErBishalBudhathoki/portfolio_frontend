@@ -35,7 +35,7 @@ async def get_blog_posts_from_sheet() -> List[Dict[str, Any]]:
                     return cache_data.get('posts', [])
         
         # If no recent cache, fetch from Google Sheets
-        service = setup_sheets_service()
+        service = await setup_sheets_service()
         if not service:
             print("Failed to set up Google Sheets service")
             # Fall back to cache if it exists, otherwise return empty list
@@ -83,8 +83,8 @@ async def get_blog_posts_from_sheet() -> List[Dict[str, Any]]:
         # If all else fails, return an empty list
         return []
 
-def setup_sheets_service():
-    """Set up the Google Sheets API service"""
+async def setup_sheets_service():
+    """Set up the Google Sheets API service asynchronously"""
     try:
         # First, try to use a service account if credentials exist
         credentials_path = os.path.join(os.path.dirname(__file__), "../credentials/google_credentials.json")
@@ -271,7 +271,7 @@ async def ensure_blog_sheet_exists():
     """Ensure that the blog_posts sheet exists in the spreadsheet with correct headers"""
     try:
         # Set up the Google Sheets service
-        service = setup_sheets_service()
+        service = await setup_sheets_service()
         if not service:
             print("Failed to set up Google Sheets service")
             return False
@@ -381,7 +381,7 @@ async def get_detailed_blog_posts_from_sheet() -> List[Dict[str, Any]]:
     """
     try:
         # Set up the Google Sheets service
-        service = setup_sheets_service()
+        service = await setup_sheets_service()
         if not service:
             print("Failed to set up Google Sheets service for detailed blog posts")
             return []
@@ -491,7 +491,7 @@ async def ensure_manual_blog_sheet_exists():
     """Ensure that the manual_blog_posts sheet exists with the correct structure"""
     try:
         # Set up the Google Sheets service
-        service = setup_sheets_service()
+        service = await setup_sheets_service()
         if not service:
             print("Failed to set up Google Sheets service")
             return False

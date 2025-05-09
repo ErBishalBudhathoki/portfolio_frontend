@@ -16,20 +16,21 @@ class NotificationHelper:
         """Initialize the notification helper with Telegram credentials"""
         self.telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
         self.telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
-        self.is_enabled = bool(self.telegram_bot_token and self.telegram_chat_id)
+        self.is_telegram_configured = bool(self.telegram_bot_token and self.telegram_chat_id)
+        self.is_enabled = self.is_telegram_configured  # For backwards compatibility
         self.last_update_id = 0
         self.command_handlers = {}
         self.loop = asyncio.new_event_loop()
         self.executor = ThreadPoolExecutor(max_workers=1)
         
         # Start message polling in a separate thread if enabled
-        if self.is_enabled:
+        if self.is_telegram_configured:
             self.running = True
             self.polling_thread = threading.Thread(target=self._poll_messages)
             self.polling_thread.daemon = True
             self.polling_thread.start()
         
-        if not self.is_enabled and self.telegram_bot_token:
+        if not self.is_telegram_configured and self.telegram_bot_token:
             # If we have a token but no chat ID, try to get it
             chat_id = self.get_chat_id()
             if chat_id:
@@ -85,7 +86,7 @@ class NotificationHelper:
     
     def _get_updates(self):
         """Get updates from Telegram API"""
-        if not self.is_enabled:
+        if not self.is_telegram_configured:
             return []
             
         try:
@@ -133,33 +134,43 @@ class NotificationHelper:
             print(f"Error getting chat ID: {e}")
             return None
     
-    def test_notification(self) -> bool:
+    def test_notification(self) -> dict:
         """
         Send a test notification to verify the setup
         """
         if not self.telegram_bot_token:
             print("ERROR: TELEGRAM_BOT_TOKEN not set in .env file")
-            return False
+            return {"success": False, "message": "TELEGRAM_BOT_TOKEN not set in .env file"}
             
         message = "🔔 Test notification from LinkedIn Scraper\n\nIf you see this, your notifications are working!"
         return self.send_notification(message, "INFO")
     
-    def send_notification(self, message: str, level: str = "INFO") -> bool:
-        """Send a notification via Telegram"""
-        if not self.is_enabled:
-            return False
-            
+    def send_notification(self, message, message_type="INFO"):
+        """Send a notification to Telegram if configured"""
+        if not self.is_telegram_configured:
+            print(f"Telegram not configured, can't send notification: {message}")
+            return {"success": False, "message": "Telegram not configured"}
+        
+        # Prefix the message with environment information to distinguish between local and production
+        is_production = os.environ.get('PORT') == '8080'  # Cloud Run sets PORT=8080
+        env_prefix = "🌎 PROD" if is_production else "🧪 LOCAL"
+        
+        # Format the message with type and timestamp
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Choose emoji based on message type
+        if message_type == "ERROR":
+            emoji = "❌"
+        elif message_type == "SUCCESS":
+            emoji = "✅"
+        elif message_type == "WARNING":
+            emoji = "⚠️"
+        else:
+            emoji = "ℹ️"
+        
+        formatted_message = f"{env_prefix} | {emoji} {message_type}: {message}\n\n🕒 {timestamp}"
+        
         try:
-            # Format message based on level
-            emoji_map = {
-                "INFO": "ℹ️",
-                "SUCCESS": "✅",
-                "WARNING": "⚠️",
-                "ERROR": "❌"
-            }
-            emoji = emoji_map.get(level.upper(), "ℹ️")
-            formatted_message = f"{emoji} {level.upper()}\n{message}\n📅 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-            
             url = f"https://api.telegram.org/bot{self.telegram_bot_token}/sendMessage"
             data = {
                 "chat_id": self.telegram_chat_id,
@@ -168,30 +179,51 @@ class NotificationHelper:
             }
             
             response = requests.post(url, json=data)
-            return response.status_code == 200
+            response_json = response.json()
             
+            if response_json.get("ok", False):
+                print(f"Notification sent: {message}")
+                return {"success": True, "message": "Notification sent successfully"}
+            else:
+                print(f"Failed to send notification: {response_json}")
+                return {"success": False, "message": f"Failed to send notification: {response_json}"}
         except Exception as e:
-            print(f"Error sending Telegram notification: {e}")
-            return False
+            print(f"Error sending notification: {str(e)}")
+            return {"success": False, "message": f"Error sending notification: {str(e)}"}
     
-    def notify_scrape_start(self, profile_url: str) -> bool:
+    def notify_scrape_start(self, profile_url: str) -> dict:
         """Send notification when scraping starts"""
         message = f"🔄 Starting LinkedIn profile scrape\nProfile: {profile_url}"
         return self.send_notification(message, "INFO")
     
-    def notify_scrape_success(self, name: str, is_fallback: bool = False) -> bool:
+    def notify_scrape_success(self, name: str, is_fallback: bool = False) -> dict:
         """Send notification when scraping completes successfully"""
-        status = "using fallback data" if is_fallback else "with fresh data"
-        message = f"✅ LinkedIn scrape completed {status}\nProfile: {name}"
+        if is_fallback:
+            message = f"✅ LinkedIn profile load completed (from FALLBACK data)\nProfile: {name}"
+        else:
+            message = f"✅ LinkedIn profile scrape completed successfully\nProfile: {name}"
         return self.send_notification(message, "SUCCESS")
     
-    def notify_scrape_error(self, error: str) -> bool:
-        """Send notification when scraping encounters an error"""
-        message = f"❌ LinkedIn scrape failed\nError: {error}"
+    def notify_scrape_error(self, error: str) -> dict:
+        """Send notification when scraping fails"""
+        message = f"LinkedIn scrape failed: {error}"
         return self.send_notification(message, "ERROR")
     
     def stop(self):
         """Stop the message polling thread"""
         self.running = False
         if hasattr(self, 'polling_thread'):
-            self.polling_thread.join() 
+            self.polling_thread.join()
+    
+    async def listen_for_messages(self):
+        """
+        Dummy async method for compatibility.
+        Actual message handling is done in _poll_messages thread.
+        """
+        if not self.is_telegram_configured:
+            print("Telegram not configured. Cannot listen for messages.")
+            return False
+            
+        print("Telegram message handling is running in background thread.")
+        # We don't need to do anything here since _poll_messages is already running in a thread
+        return True 

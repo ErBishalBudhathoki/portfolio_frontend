@@ -39,11 +39,12 @@ echo "Testing Chrome WebDriver..."\n\
 python -c "from selenium import webdriver; from selenium.webdriver.chrome.service import Service; from webdriver_manager.chrome import ChromeDriverManager; from selenium.webdriver.chrome.options import Options; options = Options(); options.add_argument(\"--headless=new\"); options.add_argument(\"--no-sandbox\"); options.add_argument(\"--disable-dev-shm-usage\"); print(\"WebDriver modules imported successfully\"); service = Service(); print(\"Service created successfully\"); driver = webdriver.Chrome(service=service, options=options); print(\"Chrome WebDriver initialized\"); driver.quit(); print(\"Chrome WebDriver test completed successfully\")" || echo "Warning: Chrome WebDriver test failed, but continuing startup"\n\
 \n\
 echo "Starting FastAPI application..."\n\
-exec uvicorn app.main:app --host 0.0.0.0 --port $PORT\n\
+# PORT is set automatically by Cloud Run\n\
+exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}\n\
 ' > /app/startup.sh && chmod +x /app/startup.sh
 
 # Set environment variables and expose port
-ENV PORT=8080
+# PORT is set automatically by Cloud Run
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8080
 
