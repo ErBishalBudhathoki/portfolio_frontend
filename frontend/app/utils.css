@@ -1,0 +1,36 @@
+/* Utility classes for responsive spacing */
+
+/* Section spacing - reduces vertical margin between sections */
+.section-spacing {
+  /* Default (mobile) */
+  padding-top: 0;
+  padding-bottom: clamp(0.75rem, 3vw, 2rem);
+}
+
+/* Divider spacing - reduces space taken by section dividers */
+.divider-spacing {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* Section headings spacing - tightens up spacing in section headings */
+.section-heading-spacing {
+  margin-bottom: clamp(1rem, 2vw, 1.5rem);
+}
+
+/* Content spacing - reduces space between content blocks */
+.content-spacing {
+  margin-top: clamp(1rem, 2vw, 1.5rem);
+}
+
+/* Card inner spacing - makes cards more compact on mobile */
+@media (max-width: 768px) {
+  .card-compact {
+    padding: 0.75rem;
+  }
+}
+
+/* Group related sections closer */
+.section-group {
+  margin-top: -2.5rem;
+} 
