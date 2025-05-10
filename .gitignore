@@ -1,21 +1,71 @@
 # Dependencies
 node_modules/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+.vercel/
+
+# Development
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache
+.cache/
+.pytest_cache/
+.mypy_cache/
+
+# Credentials and secrets
+**/credentials/*.json
+*.pem
+*.key
+*.crt
+.gcloud/
+.aws/
+
+# Backup files
+**/backup-deploy-scripts*/
+*.bak
+*.backup
+
+# Keep these directories
+!frontend/lib/
+!frontend/public/
+!backend/app/
+!frontend/components/
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Local development
+local-docker-deploy.sh
+minimal-package.json
+
+# Environment files
 .pnp/
 .pnp.js
 
 # Testing
 coverage/
 
-# Next.js
-.next/
-out/
-
-# Production
-build/
-dist/
-
 # Environment files
-.env
 .env.local
 .env.development.local
 .env.test.local
@@ -28,7 +78,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # Python
-__pycache__/
 *.py[cod]
 *$py.class
 *.so
@@ -40,7 +89,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -132,7 +180,6 @@ frontend/.nuxt/
 frontend/.nitro/
 backend/.pytest_cache/
 backend/.coverage
-.vercel
 /public/
 
 # OS specific
@@ -143,7 +190,6 @@ Desktop.ini
 # Application specific
 local-docker-deploy.sh.bak
 minimal-package.json
-*.backup
 
 # Certificate files
 *.cert
