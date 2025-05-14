@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Calendar, Clock, ChevronRight, PenTool, Bookmark, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -60,6 +59,30 @@ function formatDate(dateString: string): string {
     return dateString;
   }
 }
+
+// Add new image component with error handling
+const ImageWithFallback = ({
+  src,
+  alt,
+  ...props
+}: {
+  src: string;
+  alt: string;
+  [key: string]: any;
+}) => {
+  const [imgSrc, setImgSrc] = useState(src);
+  
+  return (
+    <img
+      {...props}
+      src={imgSrc}
+      alt={alt}
+      onError={() => {
+        setImgSrc('/images/blog-placeholder.jpg');
+      }}
+    />
+  );
+};
 
 export default function BlogPage() {
   // Use our cached API hook for regular blog posts
@@ -155,13 +178,11 @@ export default function BlogPage() {
             <div className="bg-card border border-border rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="relative h-64 md:h-full overflow-hidden">
-                  <Image
+                  <ImageWithFallback
                     src={featuredPost.featured_image || featuredPost.thumbnail_url || featuredPost.coverImage || "/images/blog-placeholder.jpg"}
                     alt={featuredPost.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    className="object-cover"
-                    priority
+                    className="object-cover w-full h-full"
+                    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
                   />
                 </div>
                 <div className="p-6 md:p-8 flex flex-col justify-center">
@@ -210,12 +231,11 @@ export default function BlogPage() {
               className="bg-card border border-border rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all"
             >
               <div className="relative h-48 overflow-hidden">
-                <Image 
+                <ImageWithFallback
                   src={post.featured_image || post.thumbnail_url || post.coverImage || "/images/blog-placeholder.jpg"}
                   alt={post.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover transform hover:scale-105 transition-transform duration-500"
+                  className="object-cover transform hover:scale-105 transition-transform duration-500 w-full h-full"
+                  style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
                 />
                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-black/40"></div>
                 {post.tags && post.tags.length > 0 && (

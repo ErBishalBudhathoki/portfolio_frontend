@@ -1,10 +1,9 @@
 import os
 import json
 from datetime import datetime
-import pandas as pd
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from dotenv import load_dotenv
 
 # Load environment variables

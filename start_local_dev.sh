@@ -76,7 +76,11 @@ function check_prerequisites() {
     all_ok=false
   fi
   
-  return $all_ok
+  if [ "$all_ok" = true ]; then
+    return 0
+  else
+    return 1
+  fi
 }
 
 # Check if .env files exist
@@ -89,13 +93,12 @@ function check_env_files() {
   if [ -f "$BACKEND_DIR/.env" ]; then
     echo -e "${GREEN}✓${NC} Backend .env file found"
     
-    # Check for required variables
-    source "$BACKEND_DIR/.env"
-    local required_vars=("LINKEDIN_PROFILE_URL" "LINKEDIN_EMAIL" "LINKEDIN_PASSWORD" "SHEET_ID" "SHEET_NAME" "HOST" "PORT")
+    # Use grep to check for required variables instead of sourcing
     local missing=()
+    local required_vars=("LINKEDIN_PROFILE_URL" "LINKEDIN_EMAIL" "LINKEDIN_PASSWORD" "SHEET_ID" "SHEET_NAME" "HOST" "PORT")
     
     for var in "${required_vars[@]}"; do
-      if [ -z "${!var}" ]; then
+      if ! grep -q "^$var=" "$BACKEND_DIR/.env"; then
         missing+=("$var")
       fi
     done
@@ -122,7 +125,7 @@ GITHUB_URL=https://github.com/bishalbudhathoki
 # Google Sheet ID (from URL)
 GOOGLE_CREDENTIALS_PATH=credentials/google_credentials.json
 SHEET_ID=1blqFnWjYgB1idiYqqEZR5qfueO0k6vPZv4eP8Yn3xTg
-SHEET_NAME=linkedin_sheet
+SHEET_NAME="linkedin_sheet"
 
 # API Configuration
 HOST=0.0.0.0
@@ -145,7 +148,11 @@ EOL
     echo -e "${GREEN}✓${NC} Created frontend/.env.local with basic configuration"
   fi
   
-  return $all_ok
+  if [ "$all_ok" = true ]; then
+    return 0
+  else
+    return 1
+  fi
 }
 
 # Run backend debug script
@@ -279,12 +286,12 @@ function main() {
   check_env_files
   env_status=$?
   
-  # Run backend diagnostic
-  run_backend_diagnostic
-  diag_status=$?
+  # Skip backend diagnostic as the script doesn't exist
+  echo -e "\n${YELLOW}Note: Skipping backend diagnostic check as the script doesn't exist.${NC}"
+  diag_status=0
   
   # If there are serious issues, ask for confirmation
-  if [ $env_status -ne 0 ] || [ $diag_status -ne 0 ]; then
+  if [ $env_status -ne 0 ]; then
     echo -e "\n${YELLOW}Warning: Some issues were detected with your environment.${NC}"
     read -p "Do you still want to continue starting the development servers? (y/n): " -n 1 -r
     echo

@@ -39,8 +39,9 @@ fi
 # Start backend in the background
 echo "Starting backend..."
 cd backend
+python3 -m venv venv
 source venv/bin/activate || { echo "Error: Virtual environment not found. Please run setup.sh first"; exit 1; }
-python run.py &
+python run_app.py &
 BACKEND_PID=$!
 echo "Backend started with PID: $BACKEND_PID"
 

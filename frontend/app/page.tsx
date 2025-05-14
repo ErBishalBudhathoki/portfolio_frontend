@@ -183,13 +183,10 @@ export default async function Home() {
                     {/* Image container */}
                     <div className="absolute -top-6 inset-x-0 bottom-0 rounded-full overflow-hidden">
                       <div className="w-full h-[115%] scale-105 transform origin-top">
-                        <Image
+                        <img
                           src={LOCAL_PROFILE_IMAGE}
-                          alt={basic_info?.name || "Bishal Budhathoki"}
-                          fill
-                          priority
-                          className="object-cover hover:scale-105 transition-transform duration-500"
-                          sizes="(max-width: 768px) 400px, 450px"
+                          alt={displayName}
+                          className="object-cover w-full h-full hover:scale-105 transition-transform duration-500"
                           style={{ objectPosition: 'center 30%' }}
                         />
                       </div>

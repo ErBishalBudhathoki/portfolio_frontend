@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getCachedData, getCacheHeaders } from '@/lib/cache';
 

@@ -1,0 +1,6 @@
+tunnel: 14b5e6ee-1c0d-456f-90f3-cf14dd3b23e0
+credentials-file: /var/services/homes/pratikshaadmin/.cloudflared/14b5e6ee-1c0d-456f-90f3-cf14dd3b23e0.json
+ingress:
+  - hostname: nas.bishalbudhathoki.com
+    service: http://localhost:5000
+  - service: http_status:404 

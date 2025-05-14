@@ -1,7 +1,5 @@
 from fastapi import APIRouter, HTTPException
 from typing import Dict, Any
-import json
-import os
 
 from app.linkedin_scraper import LinkedInScraper
 from app.utils.google_sheets import GoogleSheetsManager
@@ -9,8 +7,7 @@ from app.config import (
     GOOGLE_CREDENTIALS_PATH,
     LINKEDIN_SHEET_ID,
     LINKEDIN_SHEET_NAME,
-    LINKEDIN_PROFILE_URL,
-    LINKEDIN_COOKIE_PATH
+    LINKEDIN_PROFILE_URL
 )
 
 router = APIRouter()

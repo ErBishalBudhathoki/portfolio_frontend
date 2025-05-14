@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { Briefcase, GraduationCap, Calendar, MapPin } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useApi } from "@/hooks/useApi";
@@ -52,6 +51,30 @@ const FALLBACK_DATA: ProfileData = {
   projects: [],
   certifications: [],
   last_updated: new Date().toISOString(),
+};
+
+// Add image component with error handling
+const ImageWithFallback = ({
+  src,
+  alt,
+  ...props
+}: {
+  src: string;
+  alt: string;
+  [key: string]: any;
+}) => {
+  const [imgSrc, setImgSrc] = useState(src);
+  
+  return (
+    <img
+      {...props}
+      src={imgSrc}
+      alt={alt}
+      onError={() => {
+        setImgSrc('/images/placeholder-profile.jpg');
+      }}
+    />
+  );
 };
 
 export default function AboutPage() {
@@ -117,16 +140,18 @@ export default function AboutPage() {
             <div className="md:col-span-4 lg:col-span-3">
               <div className="sticky top-24">
                 <div className="relative w-48 h-48 mx-auto md:w-full md:h-auto md:aspect-square rounded-full md:rounded-xl overflow-hidden border-4 border-card shadow-xl bg-gradient-to-br from-primary/20 via-transparent to-accent-foreground/20">
-                  <Image
+                  <ImageWithFallback
                     src="/images/02.png"
                     alt={displayName}
-                    fill
-                    className="object-cover hover:scale-110 transition-transform duration-500"
-                    priority
-                    sizes="(max-width: 768px) 192px, 33vw"
+                    className="object-cover hover:scale-110 transition-transform duration-500 w-full h-full"
                     style={{ 
                       objectPosition: 'center -23%',
-                      transform: 'scale(1.5)'
+                      transform: 'scale(1.5)',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0
                     }}
                   />
                 </div>

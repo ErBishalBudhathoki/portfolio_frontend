@@ -8,7 +8,7 @@ echo "╚═══════════════════════�
 echo ""
 
 # Default values
-DEFAULT_REPO="https://github.com/username/portfolio.git"
+DEFAULT_REPO="https://github.com/BishalBudhathoki/portfolio_frontend"
 DEFAULT_BRANCH="main"
 
 # Prompt for GitHub repository URL

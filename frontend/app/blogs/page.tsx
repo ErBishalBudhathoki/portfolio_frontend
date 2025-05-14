@@ -1,5 +1,6 @@
 import { fetchWithRetry, fetchWithValidation } from '@/lib/fetchWithRetry';
 import Link from 'next/link';
+import Image from 'next/image';
 
 // Set this page to be dynamically rendered
 export const dynamic = 'force-dynamic';
@@ -86,11 +87,19 @@ export default async function BlogsPage() {
             >
               <div className="bg-muted/30 border border-muted/50 rounded-lg overflow-hidden h-full transition-transform duration-300 hover:scale-[1.02] hover:shadow-md flex flex-col">
                 {blog.image && (
-                  <div className="w-full h-48 overflow-hidden">
-                    <img 
-                      src={blog.image} 
-                      alt={blog.title} 
-                      className="w-full h-full object-cover object-center"
+                  <div className="w-full h-48 overflow-hidden relative">
+                    <Image 
+                      src={blog.image}
+                      alt={blog.title}
+                      fill
+                      unoptimized={true}
+                      className="object-cover object-center"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      onError={(e) => {
+                        // Provide a fallback for broken images
+                        const target = e.currentTarget as HTMLImageElement;
+                        target.src = "/images/blog-placeholder.jpg";
+                      }}
                     />
                   </div>
                 )}

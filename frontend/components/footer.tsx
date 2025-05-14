@@ -1,13 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { Github, Linkedin, Mail, ExternalLink } from "lucide-react";
+import { Github, Linkedin, Mail, ExternalLink, Globe } from "lucide-react";
+import { useApi } from "@/hooks/useApi";
+
+// Define the shape of the API response
+interface ProfileData {
+  basic_info?: {
+    contact_email?: string;
+    [key: string]: any;
+  };
+  [key: string]: any;
+}
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   const githubUrl = process.env.NEXT_PUBLIC_GITHUB_URL || "https://github.com/BishalBudhathoki";
   const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || "https://www.linkedin.com/in/bishalbudhathoki/";
   const twitterUrl = process.env.NEXT_PUBLIC_TWITTER_URL || "https://x.com/bis2vis?s=21";
+
+  // Use API hook to get profile data with type
+  const { data } = useApi<ProfileData>('/profile', {
+    dedupingInterval: 300000, // 5 minutes
+  });
+  
+  // Get contact email from profile data or use default
+  const contactEmail = data?.basic_info?.contact_email || 'contact@bishalbudhathoki.com';
 
   return (
     <footer className="bg-card border-t border-border py-16">
@@ -102,11 +120,11 @@ const Footer = () => {
             <ul className="space-y-4">
               <li className="flex items-start">
                 <Mail className="mt-1 mr-3 h-5 w-5 text-accent-foreground" />
-              <a
-                  href="mailto:contact@bishalbudhathoki.com"
+                <a
+                  href={`mailto:${contactEmail}`}
                   className="text-muted-foreground hover:text-accent-foreground transition-colors"
                 >
-                  contact@bishalbudhathoki.com
+                  {contactEmail}
                 </a>
               </li>
               <li className="flex items-start">

@@ -1,21 +1,26 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
 import json
 from datetime import datetime
-import pandas as pd
-from typing import List, Dict, Any, Optional
 from .linkedin_scraper import scrape_linkedin_profile
 from .google_sheet import get_blog_posts_from_sheet, ensure_blog_sheet_exists, get_detailed_blog_posts_from_sheet, ensure_manual_blog_sheet_exists, setup_sheets_service, SHEET_ID, SHEET_NAME
 from .contact_form import ContactFormSubmission, save_contact_submission, ensure_contact_sheet_exists
 from .linkedin_sheet import save_linkedin_data_to_sheet, get_linkedin_data_from_sheet, ensure_linkedin_sheet_exists, get_cv_url_from_sheet
 from .notification_helper import NotificationHelper
+from .database import engine, Base
+from .routes import analytics_routes
+from .routes import firebase_routes
+from .firebase_config import firebase
 import asyncio
+import subprocess
 
 # Load environment variables
 load_dotenv()
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Portfolio API"
@@ -42,6 +47,12 @@ os.makedirs(os.path.dirname(LINKEDIN_DATA_PATH), exist_ok=True)
 
 # Initialize NotificationHelper as a global variable
 notifier = NotificationHelper()
+
+# Include analytics routes
+app.include_router(analytics_routes.router, prefix="/api/analytics", tags=["Analytics"])
+
+# Include Firebase routes
+app.include_router(firebase_routes.router, prefix="/api/firebase", tags=["Firebase"])
 
 # Create an async function to handle the scrape command
 async def handle_scrape_command():
@@ -504,6 +515,43 @@ async def startup_event():
         print("Starting up Portfolio Backend API...")
         print("=========================================")
         
+        # --- FIREBASE CONNECTION CHECK ---
+        def check_firebase_connection():
+            try:
+                from firebase_admin import credentials, firestore, initialize_app, _apps
+                import os
+                creds_path = os.getenv("FIREBASE_SERVICE_ACCOUNT", "credentials/firebase-credentials.json")
+                if not os.path.exists(creds_path):
+                    print(f"❌ Firebase credentials not found at {creds_path}")
+                    return False
+                if not _apps:
+                    cred = credentials.Certificate(creds_path)
+                    initialize_app(cred)
+                db = firestore.client()
+                # Try to access a collection
+                db.collection('test').limit(1).get()
+                print("✅ Firebase connection successful!")
+                return True
+            except Exception as e:
+                print(f"❌ Firebase connection failed: {e}")
+                return False
+
+        print("Checking Firebase connection...")
+        if not check_firebase_connection():
+            print("Attempting to set up Firebase database...")
+            result = subprocess.run(["python", "backend/setup_firebase.py"], capture_output=True, text=True)
+            print(result.stdout)
+            if result.returncode != 0:
+                print(f"❌ Firebase setup failed: {result.stderr}")
+            else:
+                print("Re-checking Firebase connection after setup...")
+                if not check_firebase_connection():
+                    print("❌ Firebase connection still failed after setup. Please check your credentials and Firestore setup.")
+                else:
+                    print("✅ Firebase connection established after setup.")
+        else:
+            print("Firebase connection is healthy.")
+
         # Make data directory if it doesn't exist
         os.makedirs(os.path.dirname(LINKEDIN_DATA_PATH), exist_ok=True)
         print(f"Data directory ensured at: {os.path.dirname(LINKEDIN_DATA_PATH)}")
@@ -581,7 +629,8 @@ async def startup_event():
 @app.get("/health", tags=["Health"])
 async def health_check():
     """Health check endpoint"""
-    return {"status": "ok", "timestamp": datetime.now().isoformat()}
+    firebase_status = "available" if firebase["db"] else "unavailable"
+    return {"status": "ok", "timestamp": datetime.now().isoformat(), "firebase": firebase_status}
 
 @app.get("/diagnose-selenium", tags=["Diagnostics"])
 async def diagnose_selenium():
@@ -591,7 +640,6 @@ async def diagnose_selenium():
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
     import os
-    import json
     
     results = {
         "system": {

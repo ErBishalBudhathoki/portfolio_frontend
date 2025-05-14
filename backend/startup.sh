@@ -148,6 +148,7 @@ echo "=== Checking Environment Variables ==="
 NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8080}
 echo "API URL: $NEXT_PUBLIC_API_URL"
 
+# Check for Google credentials
 if [ -z "$GOOGLE_SHEETS_CREDENTIALS" ]; then
     echo "WARNING: GOOGLE_SHEETS_CREDENTIALS environment variable not set"
 else
@@ -174,7 +175,94 @@ else
     fi
 fi
 
+# Check for Firebase credentials
+echo
+echo "=== Checking Firebase Configuration ==="
+if [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
+    echo "Firebase credentials provided as environment variable"
+    # Decode to file if base64 encoded
+    if [[ "$FIREBASE_CREDENTIALS_JSON" == *"="* ]]; then
+        echo "Detected base64 encoded Firebase credentials, decoding..."
+        echo $FIREBASE_CREDENTIALS_JSON | base64 -d > /app/credentials/firebase-credentials.json
+    else
+        # Write directly to file
+        echo $FIREBASE_CREDENTIALS_JSON > /app/credentials/firebase-credentials.json
+    fi
+    echo "Firebase credentials saved to file"
+elif [ -f "/app/credentials/firebase-credentials.json" ]; then
+    echo "Firebase credentials file found in credentials directory"
+else
+    echo "WARNING: Firebase credentials not found. Some features may be limited."
+fi
+
+echo "Firebase Storage Bucket: ${FIREBASE_STORAGE_BUCKET:-not set}"
+echo "Firebase Project ID: ${FIREBASE_PROJECT_ID:-not set}"
+
 # Start the application
 echo
 echo "=== Starting FastAPI Application ==="
-exec python -m uvicorn app.main:app --host 0.0.0.0 --port 8080 
+
+echo "Starting backend application..."
+echo "Verifying Chrome installation..."
+CHROME_VERSION=$(google-chrome --version)
+echo "Chrome version: $CHROME_VERSION"
+
+echo "Testing Chrome WebDriver..."
+python -c "from selenium import webdriver; from selenium.webdriver.chrome.service import Service; from webdriver_manager.chrome import ChromeDriverManager; from selenium.webdriver.chrome.options import Options; options = Options(); options.add_argument(\"--headless=new\"); options.add_argument(\"--no-sandbox\"); options.add_argument(\"--disable-dev-shm-usage\"); print(\"WebDriver modules imported successfully\"); service = Service(); print(\"Service created successfully\"); driver = webdriver.Chrome(service=service, options=options); print(\"Chrome WebDriver initialized\"); driver.quit(); print(\"Chrome WebDriver test completed successfully\")" || echo "Warning: Chrome WebDriver test failed, but continuing startup"
+
+echo "Checking Firebase configuration..."
+if [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
+  echo "Firebase credentials provided as environment variable"
+elif [ -f "/app/credentials/firebase-credentials.json" ]; then
+  echo "Firebase credentials file found in credentials directory"
+  
+  # Attempt to connect to Firebase
+  echo "Testing Firebase connection..."
+  FIREBASE_TEST=$(python -c "
+import sys
+import firebase_admin
+from firebase_admin import credentials, firestore
+try:
+    cred = credentials.Certificate('/app/credentials/firebase-credentials.json')
+    app = firebase_admin.initialize_app(cred)
+    db = firestore.client()
+    # Try to access a collection to verify Firestore is set up
+    doc_count = len(list(db.collection('test').limit(1).get()))
+    print('OK')
+    sys.exit(0)
+except Exception as e:
+    print(str(e))
+    sys.exit(1)
+")
+  
+  if [[ $? -ne 0 ]]; then
+    echo "Warning: Firebase connection failed with error: $FIREBASE_TEST"
+    echo "Attempting to set up Firebase database..."
+    
+    # Run Firebase setup script if it exists
+    if [ -f "/app/setup_firebase.py" ]; then
+      python /app/setup_firebase.py
+      if [[ $? -ne 0 ]]; then
+        echo "Warning: Failed to set up Firebase database. Some functionality may be limited."
+      else
+        echo "Firebase database successfully set up!"
+      fi
+    else
+      echo "Warning: Firebase setup script not found. Some functionality may be limited."
+    fi
+  else
+    echo "Firebase connection successful!"
+  fi
+else
+  echo "Warning: Firebase credentials not found. Some functionality may be limited."
+fi
+
+# Run environment diagnostics
+if [ -f "/app/debug_environment.py" ]; then
+  echo "Running environment diagnostics..."
+  python /app/debug_environment.py --quiet || echo "Some diagnostics failed, but continuing startup"
+fi
+
+echo "Starting FastAPI application..."
+# PORT is set automatically by Cloud Run
+exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} 

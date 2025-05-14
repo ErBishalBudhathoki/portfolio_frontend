@@ -1,9 +1,5 @@
-import os
-import json
 from datetime import datetime
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from pydantic import BaseModel, EmailStr
 
 # Import the Google Sheets setup function from the existing module

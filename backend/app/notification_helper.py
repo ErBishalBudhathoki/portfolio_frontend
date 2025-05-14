@@ -2,7 +2,6 @@ import os
 import requests
 from typing import Optional
 from dotenv import load_dotenv
-import json
 import asyncio
 from datetime import datetime
 import threading

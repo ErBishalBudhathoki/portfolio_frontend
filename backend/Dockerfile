@@ -38,6 +38,15 @@ echo "Chrome version: $CHROME_VERSION"\n\
 echo "Testing Chrome WebDriver..."\n\
 python -c "from selenium import webdriver; from selenium.webdriver.chrome.service import Service; from webdriver_manager.chrome import ChromeDriverManager; from selenium.webdriver.chrome.options import Options; options = Options(); options.add_argument(\"--headless=new\"); options.add_argument(\"--no-sandbox\"); options.add_argument(\"--disable-dev-shm-usage\"); print(\"WebDriver modules imported successfully\"); service = Service(); print(\"Service created successfully\"); driver = webdriver.Chrome(service=service, options=options); print(\"Chrome WebDriver initialized\"); driver.quit(); print(\"Chrome WebDriver test completed successfully\")" || echo "Warning: Chrome WebDriver test failed, but continuing startup"\n\
 \n\
+echo "Checking Firebase configuration..."\n\
+if [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then\n\
+  echo "Firebase credentials provided as environment variable"\n\
+elif [ -f "/app/credentials/firebase-credentials.json" ]; then\n\
+  echo "Firebase credentials file found in credentials directory"\n\
+else\n\
+  echo "Warning: Firebase credentials not found. Some functionality may be limited."\n\
+fi\n\
+\n\
 echo "Starting FastAPI application..."\n\
 # PORT is set automatically by Cloud Run\n\
 exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}\n\

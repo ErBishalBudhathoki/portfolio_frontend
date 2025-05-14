@@ -13,6 +13,7 @@ interface BasicInfo {
   email?: string;
   phone?: string;
   location?: string;
+  contact_email?: string;
 }
 
 interface SocialLink {
@@ -41,6 +42,14 @@ export default function ContactPage() {
   const { data, error, isLoading } = useApi<{basic_info: BasicInfo, social_links: SocialLink[]}>('/profile', {
     dedupingInterval: 300000, // 5 minutes cache
   });
+  
+  // Debug log to see what we're getting from the API
+  useEffect(() => {
+    if (data) {
+      console.log('Contact page - Profile data received:', data);
+      console.log('Contact email:', data.basic_info?.contact_email);
+    }
+  }, [data]);
   
   // Extract relevant data or use defaults
   const contactInfo = {
@@ -144,10 +153,10 @@ export default function ContactPage() {
                 <div>
                   <h3 className="text-lg font-medium mb-1 text-foreground">Email</h3>
                   <a
-                    href={`mailto:${contactInfo.basic_info.email || 'contact@example.com'}`}
+                    href={`mailto:${contactInfo.basic_info.contact_email || 'contact@bishalbudhathoki.com'}`}
                     className="text-muted-foreground hover:text-accent-foreground transition-colors"
                   >
-                    {contactInfo.basic_info.email || 'contact@example.com'}
+                    {contactInfo.basic_info.contact_email || 'contact@bishalbudhathoki.com'}
                   </a>
                 </div>
               </div>

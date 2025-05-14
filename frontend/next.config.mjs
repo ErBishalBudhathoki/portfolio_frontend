@@ -1,38 +1,41 @@
 /** @type {import('next').NextConfig} */
+import withPWA from 'next-pwa';
+
 const nextConfig = {
-  output: 'standalone', // Enable standalone output for containerized deployments
-  trailingSlash: true, // Add trailing slashes to all routes
-  poweredByHeader: false, // Remove X-Powered-By header
-  
+  output: 'standalone',
+  reactStrictMode: false,
+  trailingSlash: true,
+  poweredByHeader: false,
   images: {
+    unoptimized: true,
+    disableStaticImages: true,
     remotePatterns: [
-      { hostname: 'media.licdn.com' },     // For LinkedIn profile images
-      { hostname: 'static.licdn.com' },    // For LinkedIn content
-      { hostname: 'platform-lookaside.fbsbx.com' }, // For profile images from Facebook
-      { hostname: 'lh3.googleusercontent.com' },   // For Google-hosted images
-      { hostname: 'i.imgur.com' },         // For Imgur-hosted images
-      { hostname: 'drive.google.com' },    // For Google Drive images
-      { hostname: 'firebasestorage.googleapis.com' }, // For Firebase Storage images
-      { hostname: 'ui-avatars.com' },      // For placeholder avatars
+      {
+        protocol: 'https',
+        hostname: 'i.imgur.com',
+        pathname: '/**',
+      },
+      { hostname: 'media.licdn.com' },
+      { hostname: 'static.licdn.com' },
+      { hostname: 'platform-lookaside.fbsbx.com' },
+      { hostname: 'lh3.googleusercontent.com' },
+      { hostname: 'i.imgur.com' },
+      { hostname: 'drive.google.com' },
+      { hostname: 'firebasestorage.googleapis.com' },
+      { hostname: 'ui-avatars.com' },
     ],
     minimumCacheTTL: 60,
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-  
-  // Disable TypeScript type checking during build
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  // Disable ESLint during build
   eslint: {
     ignoreDuringBuilds: true,
   },
-  // Disable strict mode during build
-  reactStrictMode: false,
-  
-  // Enable static optimization where possible
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   staticPageGenerationTimeout: 180,
-  
-  // Configure proper caching headers
   async headers() {
     return [
       {
@@ -80,12 +83,15 @@ const nextConfig = {
       }
     ];
   },
-  
-  env: {
-    // Read API URL from environment variable or use the default backend URL
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://portfolio-backend-824962762241.us-central1.run.app',
+  async redirects() {
+    return [
+      {
+        source: '/resume',
+        destination: '/about',
+        permanent: true,
+      },
+    ];
   },
-  
   async rewrites() {
     return [
       {
@@ -98,4 +104,17 @@ const nextConfig = {
   },
 };
 
-export default nextConfig; 
+let config = nextConfig;
+
+try {
+  config = withPWA({
+    dest: 'public',
+    register: true,
+    skipWaiting: true,
+    disable: process.env.NODE_ENV === 'development'
+  })(nextConfig);
+} catch (e) {
+  console.log('PWA module not found, using standard config');
+}
+
+export default config; 

@@ -9,15 +9,16 @@ import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import ClientProviders from '@/providers/client-providers';
 
-// Define fonts
 const fontSans = FontSans({
   subsets: ['latin'],
   variable: '--font-sans',
+  display: 'swap',
 });
 
 const fontMono = FontMono({
   subsets: ['latin'],
   variable: '--font-mono',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -27,6 +28,14 @@ export const metadata: Metadata = {
   keywords: ["portfolio", "developer", "software engineer", "web development", "Bishal Budhathoki"],
   authors: [{ name: "Bishal Budhathoki" }],
   creator: "Bishal Budhathoki",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
   icons: {
     icon: ['/favicon.svg'],
   },
@@ -45,7 +54,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${fontSans.variable} ${fontMono.variable} antialiased`}
+        className={cn(
+          fontSans.variable,
+          fontMono.variable,
+          "antialiased bg-background text-foreground"
+        )}
       >
         <ThemeProvider
           attribute="class"

@@ -19,6 +19,8 @@ const defaultFetcher = async (url: string) => {
   const timestamp = new Date().getTime();
   const fullUrl = url.includes('?') ? `${url}&t=${timestamp}` : `${url}?t=${timestamp}`;
   
+  console.log('Fetching:', fullUrl);
+  
   const response = await fetch(fullUrl);
   
   if (!response.ok) {
@@ -27,7 +29,18 @@ const defaultFetcher = async (url: string) => {
     throw error;
   }
   
-  return response.json();
+  const responseData = await response.json();
+  
+  // Debug logging to help with contact email issue
+  if (url.includes('/profile')) {
+    console.log('useApi hook - Profile data response:', responseData);
+    if (responseData.basic_info) {
+      console.log('useApi hook - Profile basic_info:', responseData.basic_info);
+      console.log('useApi hook - Contact email:', responseData.basic_info.contact_email);
+    }
+  }
+  
+  return responseData;
 };
 
 export function useApi<T>(path: string, options?: ApiOptions) {
@@ -35,7 +48,7 @@ export function useApi<T>(path: string, options?: ApiOptions) {
   const isServerSide = typeof window === 'undefined';
   
   // Use a relative URL if on client-side, otherwise use absolute URL
-  let fullUrl = isServerSide 
+  const fullUrl = isServerSide 
     ? `${apiUrl}/api${path}` 
     : `/api${path}`;
     

@@ -151,7 +151,7 @@ function getDefaultProfileData(): ProfileData {
 // Function to enhance project data by extracting technologies from description
 function enhanceProjectData(project: Project): Project {
   // Map project.name to project.title if title is missing but name exists
-  let enhancedProject = { ...project };
+  const enhancedProject = { ...project };
   
   // If project has name but no title, use name as title
   if (!enhancedProject.title && enhancedProject.name) {
@@ -203,6 +203,7 @@ export default function ProjectsPage() {
   }, [profileData?.projects]);
 
   return (
+    
     <div className="container mx-auto px-4 py-12 md:py-16">
       <div className="flex flex-col items-center mb-12">
         <div className="inline-flex items-center justify-center p-1 px-3 mb-4 border border-accent-foreground/30 rounded-full bg-accent-foreground/5 text-accent-foreground text-sm font-medium">
