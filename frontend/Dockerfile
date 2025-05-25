@@ -13,7 +13,7 @@ RUN npm install
 COPY . .
 
 # Build the Next.js application with standalone output
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # Runtime stage
@@ -24,10 +24,13 @@ WORKDIR /app
 RUN apk --no-cache add curl
 
 # Environment variables
-ENV NODE_ENV production
-ENV PORT 3000
-ENV NEXT_TELEMETRY_DISABLED 1
-ENV NEXT_PUBLIC_API_URL=https://portfolio-backend-824962762241.us-central1.run.app
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV NEXT_TELEMETRY_DISABLED=1
+# Use ARG for build-time configuration
+ARG NEXT_PUBLIC_API_URL
+# Set default value only if not provided during build
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 # Create a non-root user
 RUN addgroup --system --gid 1001 nodejs
@@ -46,7 +49,7 @@ USER nextjs
 EXPOSE 3000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:3000/ || exit 1
 
 # Set the start command

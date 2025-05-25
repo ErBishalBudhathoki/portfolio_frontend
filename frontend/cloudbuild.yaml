@@ -1,7 +1,7 @@
 steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/portfolio-frontend', '.']
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/portfolio-frontend', '--build-arg', 'NEXT_PUBLIC_API_URL=${_BACKEND_URL}', '.']
     
   # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
@@ -30,7 +30,7 @@ steps:
     - '--max-instances'
     - '10'
     - '--set-env-vars'
-    - 'NEXT_PUBLIC_API_URL=https://portfolio-backend-824962762241.us-central1.run.app'
+    - 'NEXT_PUBLIC_API_URL=${_BACKEND_URL}'
 
 # Set a longer timeout for the build
 timeout: '3600s'
@@ -38,3 +38,7 @@ timeout: '3600s'
 # Specify the images to be pushed to Container Registry
 images:
   - 'gcr.io/$PROJECT_ID/portfolio-frontend'
+
+# Define substitution variables with defaults
+substitutions:
+  _BACKEND_URL: '${_BACKEND_URL}'
