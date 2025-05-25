@@ -5,6 +5,8 @@ __pycache__/
 .env
 .env.*
 !.env.example
+.github/*
+app/*
 
 # Build outputs
 .next/
@@ -38,6 +40,9 @@ yarn-error.log*
 *.crt
 .gcloud/
 .aws/
+# Configuration files with secrets
+update-frontend-config.sh
+update-backend-config.sh
 
 # Backup files
 **/backup-deploy-scripts*/
