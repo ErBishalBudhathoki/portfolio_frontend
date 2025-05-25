@@ -1,9 +1,13 @@
 #!/bin/bash
 set -e
 
+# Usage: ./cleanup-simple.sh [SERVICE_NAME]
+# Example for frontend: ./cleanup-simple.sh portfolio-frontend
+# Example for backend:  ./cleanup-simple.sh portfolio-backend
+
 # Variables - edit these as needed
 PROJECT_ID="portfolio-458717"
-SERVICE_NAME="portfolio-frontend"
+SERVICE_NAME="${1:-portfolio-frontend}"
 REPO_PATH="gcr.io/$PROJECT_ID/$SERVICE_NAME"
 
 echo "🧹 GCR Simple Image Cleanup Tool"
@@ -12,7 +16,7 @@ echo ""
 
 # List all images and their sizes
 echo "📋 Current images in repository:"
-gcloud container images list-tags $REPO_PATH --format="table(digest,tags,timestamp,size_bytes.sum())" | sort -k3
+gcloud container images list-tags $REPO_PATH --format="table(digest,tags,timestamp)" | sort -k3
 
 echo ""
 echo "Choose an option:"
@@ -95,4 +99,4 @@ esac
 # Show current status
 echo ""
 echo "📊 Current repository status:"
-gcloud container images list-tags $REPO_PATH --format="table(digest,tags,timestamp,size_bytes.sum())" | sort -k3 
+gcloud container images list-tags $REPO_PATH --format="table(digest,tags,timestamp)" | sort -k3 

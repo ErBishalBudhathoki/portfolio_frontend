@@ -47,7 +47,7 @@ app.prepare().then(() => {
   // Handle all other routes with Next.js
   server.all('*', (req, res) => {
     return handle(req, res);
-  });
+});
 
   // Start server
   server.listen(port, (err) => {

@@ -9,7 +9,8 @@ node_modules/
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-
+.github/*
+app/*
 # testing
 coverage/
 
@@ -59,3 +60,4 @@ next-env.d.ts
 
 # Cache
 .swc/
+app/firebase-test.bak

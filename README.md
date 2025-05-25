@@ -240,3 +240,86 @@ Detailed documentation for each part of the project can be found in:
 - `backend/README.md` - Backend documentation
 - `DEPLOYMENT.md` - Detailed deployment guide
 - `TROUBLESHOOTING.md` - Solutions to common issues
+
+# Cloud Run Configuration Scripts
+
+These scripts help manage environment variables and secrets for your Google Cloud Run services. They provide a secure and consistent way to update configuration without creating new deployment files.
+
+## Prerequisites
+
+- Google Cloud SDK (`gcloud`) installed and configured
+- Proper permissions to manage Cloud Run services and Secret Manager
+- Bash shell environment
+
+## Available Scripts
+
+### Backend Configuration
+
+Update environment variables and secrets for the backend service:
+
+```bash
+# Make the script executable
+chmod +x update-backend-config.sh
+
+# Run with default settings (update both env vars and secrets)
+./update-backend-config.sh
+
+# Update only environment variables
+./update-backend-config.sh --env-only
+
+# Update only secrets
+./update-backend-config.sh --secrets-only
+
+# Show help
+./update-backend-config.sh --help
+```
+
+### Frontend Configuration
+
+Update environment variables and secrets for the frontend service:
+
+```bash
+# Make the script executable
+chmod +x update-frontend-config.sh
+
+# Run with default settings (update both env vars and secrets)
+./update-frontend-config.sh
+
+# Update only environment variables
+./update-frontend-config.sh --env-only
+
+# Update only secrets
+./update-frontend-config.sh --secrets-only
+
+# Show help
+./update-frontend-config.sh --help
+```
+
+## Features
+
+- **Flexible Updates**: Choose to update only environment variables, only secrets, or both
+- **Secure Secret Handling**: Sensitive inputs are hidden during entry
+- **Secret Creation**: Automatically prompts to create missing secrets
+- **Preview Before Execution**: Shows the command to be executed (with sensitive values masked)
+- **Confirmation Required**: Asks for confirmation before applying changes
+- **Verification**: Displays the service URL after update to confirm success
+
+## Customization
+
+To add or modify environment variables:
+1. Edit the script file
+2. Locate the section that builds the `ENV_VARS` string
+3. Add/modify variables using the format: `ENV_VARS="$ENV_VARS --set-env-vars NAME=VALUE"`
+
+To add or modify secrets:
+1. Edit the script file
+2. Locate the `SECRET_NAMES` array
+3. Add your secret name to the array
+4. The script will automatically handle checking if it exists and creating it if needed
+
+## Important Notes
+
+- These scripts use `--set-env-vars` and `--set-secrets` which will **replace** existing values rather than append
+- Each script is pre-configured for a specific service (`portfolio-backend` or `portfolio-frontend`)
+- The default region is set to `us-central1` - change this in the script if your services are deployed elsewhere
+- Always keep secret values secure and never commit them to version control

@@ -23,7 +23,7 @@ app.prepare().then(() => {
   // Default handler for all other routes
   server.all('*', (req, res) => {
     return handle(req, res);
-  });
+});
 
   const port = process.env.PORT || 3000;
   server.listen(port, (err) => {
