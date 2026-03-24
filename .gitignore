@@ -52,6 +52,8 @@ update-backend-config.sh
 # Keep these directories
 !frontend/lib/
 !frontend/public/
+!frontend/app/
+!frontend/app/**
 !backend/app/
 !frontend/components/
 

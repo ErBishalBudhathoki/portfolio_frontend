@@ -57,6 +57,9 @@ next-env.d.ts
 !public/
 !components/
 !app/
+!app/**
+app/.DS_Store
+app/**/.DS_Store
 
 # Cache
 .swc/
