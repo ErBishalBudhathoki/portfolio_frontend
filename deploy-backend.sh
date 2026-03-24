@@ -19,34 +19,38 @@ fi
 echo "Building and pushing backend container image..."
 ~/downloads/google-cloud-sdk/bin/gcloud builds submit --tag gcr.io/$PROJECT_ID/$SERVICE_NAME .
 
-# Create environment variables string
-ENV_VARS="MAIN_MODULE=app.main:app"
-ENV_VARS="$ENV_VARS,LINKEDIN_PROFILE_URL=$LINKEDIN_PROFILE_URL"
-ENV_VARS="$ENV_VARS,LINKEDIN_EMAIL=$LINKEDIN_EMAIL"
-ENV_VARS="$ENV_VARS,GITHUB_URL=$GITHUB_URL"
-ENV_VARS="$ENV_VARS,GOOGLE_CREDENTIALS_PATH=$GOOGLE_CREDENTIALS_PATH"
-ENV_VARS="$ENV_VARS,SHEET_ID=$SHEET_ID"
-ENV_VARS="$ENV_VARS,SHEET_NAME=$SHEET_NAME"
-ENV_VARS="$ENV_VARS,HOST=$HOST"
-ENV_VARS="$ENV_VARS,DEBUG=$DEBUG"
+# Construct environment variables
+ENV_ITEMS=("MAIN_MODULE=app.main:app")
 
-# Add Telegram configuration if available
-if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
-  ENV_VARS="$ENV_VARS,TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN"
-fi
+add_env_var() {
+  local key="$1"
+  local value="$2"
+  if [ -n "$value" ]; then
+    ENV_ITEMS+=("${key}=${value}")
+  fi
+}
+
+add_env_var "LINKEDIN_PROFILE_URL" "$LINKEDIN_PROFILE_URL"
+add_env_var "LINKEDIN_EMAIL" "$LINKEDIN_EMAIL"
+add_env_var "GITHUB_URL" "$GITHUB_URL"
+add_env_var "GITHUB_USERNAME" "$GITHUB_USERNAME"
+add_env_var "GITHUB_TOKEN" "$GITHUB_TOKEN"
+add_env_var "GOOGLE_CREDENTIALS_PATH" "$GOOGLE_CREDENTIALS_PATH"
+add_env_var "GOOGLE_SHEETS_ID" "$GOOGLE_SHEETS_ID"
+add_env_var "GOOGLECLOUD_API_KEY" "$GOOGLECLOUD_API_KEY"
+add_env_var "SHEET_ID" "$SHEET_ID"
+add_env_var "SHEET_NAME" "$SHEET_NAME"
+add_env_var "HOST" "$HOST"
+add_env_var "DEBUG" "$DEBUG"
+add_env_var "TELEGRAM_BOT_TOKEN" "$TELEGRAM_BOT_TOKEN"
+add_env_var "TELEGRAM_ADMIN_CHAT_ID" "$TELEGRAM_ADMIN_CHAT_ID"
 
 if [ -n "$TELEGRAM_CHAT_ID" ]; then
-  # Remove any trailing % if present
   TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID%%%}
-  ENV_VARS="$ENV_VARS,TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID"
+  add_env_var "TELEGRAM_CHAT_ID" "$TELEGRAM_CHAT_ID"
 fi
 
-# Construct environment variables
-ENV_VARS="--update-env-vars GOOGLE_SHEETS_ID=${GOOGLE_SHEETS_ID}"
-ENV_VARS="${ENV_VARS},TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}"
-ENV_VARS="${ENV_VARS},TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}"
-ENV_VARS="${ENV_VARS},GOOGLECLOUD_API_KEY=${GOOGLECLOUD_API_KEY}"
-ENV_VARS="${ENV_VARS},TELEGRAM_ADMIN_CHAT_ID=${TELEGRAM_ADMIN_CHAT_ID}"
+ENV_VARS=$(IFS=,; echo "${ENV_ITEMS[*]}")
 
 # Deploy to Cloud Run with secrets and environment variables
 echo "Deploying to Cloud Run..."

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import {
   ArrowRight,
   BrainCircuit,
@@ -6,6 +7,7 @@ import {
   Cpu,
   Database,
   Globe,
+  Github,
   Layers3,
   Rocket,
   Server,
@@ -55,6 +57,54 @@ type ProfileData = {
   skills?: Skill[] | string[] | SkillsObject;
   experience?: ExperienceItem[];
   projects?: ProjectItem[];
+};
+
+type GitHubActivityDay = {
+  date: string;
+  count: number;
+  level: number;
+  color?: string | null;
+  is_placeholder: boolean;
+  weekday: number;
+};
+
+type GitHubActivityWeek = {
+  first_day: string;
+  days: GitHubActivityDay[];
+};
+
+type GitHubActivityYear = {
+  year: number;
+  range_start: string;
+  range_end: string;
+  total_contributions: number;
+  active_days: number;
+  max_contribution_count: number;
+  busiest_day?: {
+    date: string;
+    count: number;
+  } | null;
+  month_labels: Array<{
+    week_index: number;
+    label: string;
+  }>;
+  weeks: GitHubActivityWeek[];
+};
+
+type GitHubActivity = {
+  username: string;
+  profile_url: string;
+  available: boolean;
+  source?: string;
+  message?: string;
+  recent_repositories?: Array<{
+    name?: string;
+    name_with_owner?: string;
+    url?: string;
+    last_commit_at?: string;
+    commit_count?: number;
+  }>;
+  years: GitHubActivityYear[];
 };
 
 type NormalizedSkill = {
@@ -356,6 +406,60 @@ function formatCompany(company?: string) {
   return (company || "").replace(/\s+/g, " ").trim();
 }
 
+function getContributionTone(day: GitHubActivityDay) {
+  if (day.is_placeholder) {
+    return "border-transparent bg-transparent";
+  }
+
+  if (day.level >= 4) {
+    return "border-emerald-500/70 bg-emerald-500 dark:border-emerald-400/70 dark:bg-emerald-400";
+  }
+
+  if (day.level === 3) {
+    return "border-emerald-500/50 bg-emerald-500/80 dark:border-emerald-400/50 dark:bg-emerald-400/80";
+  }
+
+  if (day.level === 2) {
+    return "border-emerald-500/35 bg-emerald-500/55 dark:border-emerald-400/35 dark:bg-emerald-400/55";
+  }
+
+  if (day.level === 1) {
+    return "border-emerald-500/20 bg-emerald-500/30 dark:border-emerald-400/20 dark:bg-emerald-400/30";
+  }
+
+  return "border-border/60 bg-muted/70 dark:bg-muted/35";
+}
+
+function getContributionStyle(day: GitHubActivityDay): CSSProperties | undefined {
+  if (day.is_placeholder || !day.color) {
+    return undefined;
+  }
+
+  return {
+    backgroundColor: day.color,
+    borderColor: day.color,
+  };
+}
+
+function formatContributionLabel(day: GitHubActivityDay) {
+  const formattedDate = new Date(`${day.date}T00:00:00`).toLocaleDateString("en-AU", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+  if (day.is_placeholder) {
+    return formattedDate;
+  }
+
+  if (day.count === 0) {
+    return `${formattedDate}: no contributions`;
+  }
+
+  const noun = day.count === 1 ? "contribution" : "contributions";
+  return `${formattedDate}: ${day.count} ${noun}`;
+}
+
 async function getProfileData(): Promise<ProfileData | null> {
   try {
     const apiUrl =
@@ -376,8 +480,28 @@ async function getProfileData(): Promise<ProfileData | null> {
   }
 }
 
+async function getGitHubActivity(): Promise<GitHubActivity | null> {
+  try {
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL || "https://portfolio-backend-824962762241.us-central1.run.app";
+
+    const response = await fetch(`${apiUrl}/api/github/activity`, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch GitHub activity");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching GitHub activity:", error);
+    return null;
+  }
+}
+
 export default async function SkillsPage() {
-  const profileData = await getProfileData();
+  const [profileData, githubActivity] = await Promise.all([getProfileData(), getGitHubActivity()]);
 
   if (!profileData) {
     return (
@@ -413,6 +537,9 @@ export default async function SkillsPage() {
   const topCategories = skillGroups.slice(0, 3);
   const featuredProjects = projects.slice(0, 3);
   const recentExperience = experience.slice(0, 3);
+  const githubYears = githubActivity?.available ? githubActivity.years : [];
+  const recentRepositories = githubActivity?.recent_repositories || [];
+  const isGraphqlSource = githubActivity?.source === "graphql";
 
   return (
     <div className="relative overflow-hidden bg-background">
@@ -509,6 +636,209 @@ export default async function SkillsPage() {
               </div>
             </div>
           </div>
+        </section>
+
+        <section className="mt-14">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
+              <Github className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-medium uppercase tracking-[0.26em] text-muted-foreground">GitHub activity</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="text-2xl font-semibold text-foreground">A rolling view of the last two years of shipping</h2>
+                {isGraphqlSource ? (
+                  <span
+                    className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300"
+                    title="Live GitHub GraphQL data"
+                  >
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(34,197,94,0.14)]" />
+                    GraphQL
+                  </span>
+                ) : null}
+              </div>
+              {recentRepositories.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-2.5">
+                  {recentRepositories.map((repository) => (
+                    <a
+                      key={repository.name_with_owner || repository.url}
+                      href={repository.url || githubActivity?.profile_url || "https://github.com/BishalBudhathoki"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/90 px-3 py-1.5 text-sm text-foreground shadow-sm transition-colors hover:border-primary/30 hover:text-primary"
+                      title={
+                        repository.last_commit_at
+                          ? `Last commit ${new Date(repository.last_commit_at).toLocaleDateString("en-AU", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}`
+                          : repository.name_with_owner || repository.name || "Repository"
+                      }
+                    >
+                      <span className="text-muted-foreground">Recently worked repo</span>
+                      <span className="font-medium">
+                        {repository.name_with_owner || repository.name || "Repository"}
+                      </span>
+                    </a>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          {githubYears.length > 0 ? (
+            <div className="grid gap-6 xl:grid-cols-2">
+              {githubYears.map((year) => {
+                const monthLabels = new Map(year.month_labels.map((item) => [item.week_index, item.label]));
+
+                return (
+                  <article
+                    key={year.year}
+                    className="relative overflow-hidden rounded-[1.85rem] border border-border/70 bg-card/95 p-6 shadow-[0_18px_50px_rgba(20,24,62,0.06)]"
+                  >
+                    <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-emerald-500/14 via-emerald-500/5 to-transparent" />
+                    <div className="relative">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">{year.year}</p>
+                          <h3 className="mt-2 text-2xl font-semibold text-foreground">
+                            {year.total_contributions.toLocaleString()} contributions
+                          </h3>
+                          <p className="mt-2 max-w-xl text-sm leading-7 text-muted-foreground">
+                            {year.active_days} active days
+                            {year.busiest_day
+                              ? ` · Peak day ${year.busiest_day.count} contributions on ${new Date(
+                                  `${year.busiest_day.date}T00:00:00`,
+                                ).toLocaleDateString("en-AU", {
+                                  day: "numeric",
+                                  month: "short",
+                                })}`
+                              : ""}
+                          </p>
+                        </div>
+
+                        <a
+                          href={githubActivity?.profile_url || "https://github.com/BishalBudhathoki"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-border/70 bg-background/85 text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+                          aria-label="Open GitHub profile"
+                          title="Open GitHub profile"
+                        >
+                          <Github className="h-5 w-5" />
+                        </a>
+                      </div>
+
+                      <div className="mt-6 overflow-x-auto">
+                        <div className="min-w-[720px]">
+                          <div
+                            className="mb-2 ml-10 grid gap-1.5"
+                            style={{ gridTemplateColumns: `repeat(${year.weeks.length}, minmax(0, 1fr))` }}
+                          >
+                            {year.weeks.map((week, index) => (
+                              <span key={`${week.first_day}-label`} className="text-[11px] text-muted-foreground">
+                                {monthLabels.get(index) || ""}
+                              </span>
+                            ))}
+                          </div>
+
+                          <div className="flex gap-3">
+                            <div className="grid grid-rows-7 gap-1.5 pt-[2px] text-[11px] text-muted-foreground">
+                              {["Sun", "", "Tue", "", "Thu", "", "Sat"].map((label, index) => (
+                                <span key={`${year.year}-weekday-${index}`} className="h-3 leading-3">
+                                  {label}
+                                </span>
+                              ))}
+                            </div>
+
+                            <div
+                              className="grid auto-cols-max grid-flow-col gap-1.5"
+                              style={{ gridTemplateRows: "repeat(7, minmax(0, 1fr))" }}
+                            >
+                              {year.weeks.flatMap((week) =>
+                                week.days.map((day) => (
+                                  <span
+                                    key={day.date}
+                                    className={`h-3.5 w-3.5 rounded-[4px] border transition-transform hover:scale-110 ${getContributionTone(
+                                      day,
+                                    )}`}
+                                    style={getContributionStyle(day)}
+                                    title={formatContributionLabel(day)}
+                                    aria-label={formatContributionLabel(day)}
+                                  />
+                                )),
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="mt-4 flex items-center justify-between gap-4 text-[11px] text-muted-foreground">
+                            <p>Daily contribution cadence across the year.</p>
+                            <div className="flex items-center gap-2">
+                              <span>Less</span>
+                              {[0, 1, 2, 3, 4].map((level) => (
+                                <span
+                                  key={`${year.year}-legend-${level}`}
+                                  className={`h-3 w-3 rounded-[4px] border ${getContributionTone({
+                                    date: year.range_start,
+                                    count: level,
+                                    level,
+                                    color: null,
+                                    is_placeholder: false,
+                                    weekday: 0,
+                                  })}`}
+                                  style={getContributionStyle({
+                                    date: year.range_start,
+                                    count: level,
+                                    level,
+                                    color:
+                                      level === 0
+                                        ? "#ebedf0"
+                                        : level === 1
+                                          ? "#9be9a8"
+                                          : level === 2
+                                            ? "#40c463"
+                                            : level === 3
+                                              ? "#30a14e"
+                                              : "#216e39",
+                                    is_placeholder: false,
+                                    weekday: 0,
+                                  })}
+                                />
+                              ))}
+                              <span>More</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <article className="relative overflow-hidden rounded-[1.85rem] border border-border/70 bg-card/95 p-6 shadow-[0_18px_50px_rgba(20,24,62,0.06)]">
+              <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-emerald-500/14 via-emerald-500/5 to-transparent" />
+              <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h3 className="text-xl font-semibold text-foreground">GitHub activity will appear here</h3>
+                  <p className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground">
+                    {githubActivity?.message || "The profile could not retrieve GitHub contribution data right now."}
+                  </p>
+                </div>
+                <a
+                  href={githubActivity?.profile_url || "https://github.com/BishalBudhathoki"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-border/70 bg-background/85 text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+                  aria-label="Open GitHub profile"
+                  title="Open GitHub profile"
+                >
+                  <Github className="h-5 w-5" />
+                </a>
+              </div>
+            </article>
+          )}
         </section>
 
         <section className="mt-14">

@@ -8,6 +8,7 @@ from datetime import datetime
 from .linkedin_scraper import scrape_linkedin_profile
 from .google_sheet import get_blog_posts_from_sheet, ensure_blog_sheet_exists, get_detailed_blog_posts_from_sheet, ensure_manual_blog_sheet_exists, setup_sheets_service, SHEET_ID, SHEET_NAME
 from .contact_form import ContactFormSubmission, save_contact_submission, ensure_contact_sheet_exists
+from .github_activity import get_github_activity
 from .linkedin_sheet import save_linkedin_data_to_sheet, get_linkedin_data_from_sheet, ensure_linkedin_sheet_exists, get_cv_url_from_sheet
 from .notification_helper import NotificationHelper
 from .database import engine, Base
@@ -175,6 +176,15 @@ async def get_profile():
     except Exception as e:
         print(f"Failed to get profile data: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to get profile data: {str(e)}")
+
+@app.get("/api/github/activity")
+async def get_github_activity_route():
+    """Get a rolling two-year GitHub activity snapshot"""
+    try:
+        return await get_github_activity()
+    except Exception as e:
+        print(f"Failed to get GitHub activity: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get GitHub activity: {str(e)}")
 
 @app.get("/api/blog")
 async def get_blog_posts():
