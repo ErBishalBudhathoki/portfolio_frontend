@@ -7,33 +7,6 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/portfolio-frontend']
     
-  # Deploy container image to Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-    - 'run'
-    - 'deploy'
-    - 'portfolio-frontend'
-    - '--image'
-    - 'gcr.io/$PROJECT_ID/portfolio-frontend'
-    - '--region'
-    - 'us-central1'
-    - '--platform'
-    - 'managed'
-    - '--allow-unauthenticated'
-    - '--memory'
-    - '2Gi'
-    - '--cpu'
-    - '1'
-    - '--min-instances'
-    - '0'
-    - '--max-instances'
-    - '10'
-    - '--set-env-vars'
-    - 'NEXT_PUBLIC_API_URL=https://portfolio-backend-824962762241.us-central1.run.app'
-    - '--port'
-    - '3000'
-
 # Set a longer timeout for the build
 timeout: '3600s'
 
