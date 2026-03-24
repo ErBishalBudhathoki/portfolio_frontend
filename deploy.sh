@@ -12,6 +12,13 @@ fi
 PROJECT_ID=$("$GCLOUD_BIN" config get-value project)
 REGION="us-central1"
 SERVICE_NAME="portfolio-frontend"
+BACKEND_SERVICE_NAME="portfolio-backend"
+BACKEND_URL="${BACKEND_URL:-$("$GCLOUD_BIN" run services describe "$BACKEND_SERVICE_NAME" --region "$REGION" --format 'value(status.url)' 2>/dev/null)}"
+
+if [ -z "$BACKEND_URL" ]; then
+  echo "Backend URL not found. Set BACKEND_URL or deploy the backend service first."
+  exit 1
+fi
 
 echo "🚀 Starting deployment process..."
 
@@ -34,7 +41,7 @@ echo "🔄 Updating Cloud Run service..."
   --cpu 1 \
   --min-instances 0 \
   --max-instances 10 \
-  --set-env-vars NEXT_PUBLIC_API_URL=https://portfolio-backend-824962762241.us-central1.run.app
+  --set-env-vars NEXT_PUBLIC_API_URL="$BACKEND_URL"
 
 # Get the service URL
 SERVICE_URL=$("$GCLOUD_BIN" run services describe $SERVICE_NAME --region $REGION --format 'value(status.url)')
