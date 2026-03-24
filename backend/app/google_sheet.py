@@ -85,45 +85,72 @@ async def get_blog_posts_from_sheet() -> List[Dict[str, Any]]:
 async def setup_sheets_service():
     """Set up the Google Sheets API service asynchronously"""
     try:
-        # First, try to use a service account if credentials exist
-        configured_path = os.getenv('GOOGLE_CREDENTIALS_PATH') or os.getenv('GOOGLE_SHEETS_CREDENTIALS')
-        if configured_path and not os.path.isabs(configured_path):
-            credentials_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", configured_path))
-        elif configured_path:
-            credentials_path = configured_path
-        else:
-            credentials_path = os.path.join(os.path.dirname(__file__), "../credentials/google_credentials.json")
-        
-        print(f"Looking for credentials file at: {credentials_path}")
-        
-        if os.path.exists(credentials_path):
-            print(f"Using service account credentials from: {credentials_path}")
+        scopes = ['https://www.googleapis.com/auth/spreadsheets']
+        credentials_secret = os.getenv('GOOGLE_SHEETS_CREDENTIALS')
+        credentials_path = os.getenv('GOOGLE_CREDENTIALS_PATH')
+
+        # Secret Manager on Cloud Run injects the secret value directly into the env var.
+        # Support both raw JSON credentials and filesystem paths for local/dev setups.
+        if credentials_secret:
             try:
-                credentials = service_account.Credentials.from_service_account_file(
-                    credentials_path, 
-                    scopes=['https://www.googleapis.com/auth/spreadsheets']
-                )
-                service = build('sheets', 'v4', credentials=credentials)
-                print("Successfully created Sheets service with service account")
-                return service
-            except Exception as cred_error:
-                print(f"Error loading service account credentials: {cred_error}")
-        else:
-            print(f"Service account credentials file not found at: {credentials_path}")
-            
-            # If no service account, try to use API key
-            api_key = os.getenv('GOOGLE_API_KEY')
-            if api_key:
-                print("Using API key from environment variables")
-                try:
-                    service = build('sheets', 'v4', developerKey=api_key)
-                    print("Successfully created Sheets service with API key")
+                if credentials_secret.lstrip().startswith('{'):
+                    credentials_info = json.loads(credentials_secret)
+                    credentials = service_account.Credentials.from_service_account_info(
+                        credentials_info,
+                        scopes=scopes
+                    )
+                    service = build('sheets', 'v4', credentials=credentials)
+                    print("Successfully created Sheets service from secret env JSON")
                     return service
-                except Exception as api_error:
-                    print(f"Error creating service with API key: {api_error}")
+            except Exception as secret_error:
+                print(f"Error loading Google Sheets credentials from env JSON: {secret_error}")
+
+        candidate_paths = []
+        if credentials_path:
+            if os.path.isabs(credentials_path):
+                candidate_paths.append(credentials_path)
             else:
-                print("No Google credentials or API key found")
-                return None
+                candidate_paths.append(os.path.normpath(os.path.join(os.path.dirname(__file__), "..", credentials_path)))
+
+        if credentials_secret and not credentials_secret.lstrip().startswith('{'):
+            if os.path.isabs(credentials_secret):
+                candidate_paths.append(credentials_secret)
+            else:
+                candidate_paths.append(os.path.normpath(os.path.join(os.path.dirname(__file__), "..", credentials_secret)))
+
+        candidate_paths.append(os.path.join(os.path.dirname(__file__), "../credentials/google_credentials.json"))
+
+        for candidate_path in candidate_paths:
+            if not candidate_path:
+                continue
+            if os.path.exists(candidate_path):
+                print(f"Using service account credentials from file: {candidate_path}")
+                try:
+                    credentials = service_account.Credentials.from_service_account_file(
+                        candidate_path,
+                        scopes=scopes
+                    )
+                    service = build('sheets', 'v4', credentials=credentials)
+                    print("Successfully created Sheets service with service account file")
+                    return service
+                except Exception as cred_error:
+                    print(f"Error loading service account credentials file: {cred_error}")
+
+        print("Service account credentials file not found in configured locations")
+
+        # If no service account, try to use API key
+        api_key = os.getenv('GOOGLE_API_KEY')
+        if api_key:
+            print("Using API key from environment variables")
+            try:
+                service = build('sheets', 'v4', developerKey=api_key)
+                print("Successfully created Sheets service with API key")
+                return service
+            except Exception as api_error:
+                print(f"Error creating service with API key: {api_error}")
+        else:
+            print("No Google credentials or API key found")
+            return None
     except Exception as e:
         print(f"Error setting up Google Sheets service: {e}")
         import traceback
