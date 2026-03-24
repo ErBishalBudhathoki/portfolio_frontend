@@ -468,9 +468,15 @@ const css = `
 `;
 
 const CARENEST_EMAIL = "carenest@bishalbudhathoki.com";
-const SUPPORT_MAILTO = `mailto:${CARENEST_EMAIL}?subject=${encodeURIComponent("CareNest Support Request")}`;
-const PRIVACY_MAILTO = `mailto:${CARENEST_EMAIL}?subject=${encodeURIComponent("CareNest Privacy Request")}`;
-const BUG_REPORT_MAILTO = `mailto:${CARENEST_EMAIL}?subject=${encodeURIComponent("[CareNest Bug Report]")}`;
+const createGmailComposeUrl = (subject: string) =>
+  `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(CARENEST_EMAIL)}&su=${encodeURIComponent(subject)}`;
+const SUPPORT_EMAIL_URL = createGmailComposeUrl("CareNest Support Request");
+const PRIVACY_EMAIL_URL = createGmailComposeUrl("CareNest Privacy Request");
+const BUG_REPORT_EMAIL_URL = createGmailComposeUrl("[CareNest Bug Report]");
+const EMAIL_LINK_PROPS = {
+  target: "_blank",
+  rel: "noreferrer",
+} as const;
 const GOOGLE_PLAY_URL = "https://play.google.com/store/apps/details?id=com.bishal.invoice";
 
 // ─── FAQ Data ─────────────────────────────────────────────────────────────────
@@ -540,7 +546,7 @@ const faqs = [
         </ul>
         <p>
           Verification typically takes 1–2 business days. Need help? Contact us at{" "}
-          <a href={SUPPORT_MAILTO}>{CARENEST_EMAIL}</a>.
+          <a href={SUPPORT_EMAIL_URL} {...EMAIL_LINK_PROPS}>{CARENEST_EMAIL}</a>.
         </p>
       </>
     ),
@@ -755,7 +761,7 @@ const faqs = [
       <p>
         Location history is automatically and permanently deleted after <strong>90 days</strong>. You
         can also request immediate deletion of your location history by contacting us at{" "}
-        <a href={PRIVACY_MAILTO}>our Privacy Officer</a>.
+          <a href={PRIVACY_EMAIL_URL} {...EMAIL_LINK_PROPS}>our Privacy Officer</a>.
       </p>
     ),
   },
@@ -784,7 +790,7 @@ const faqs = [
         <p>Under the Australian Privacy Act 1988, you have the right to access and delete your data:</p>
         <ul>
           <li>Access most of your data directly in the app under <strong>Account → My Data</strong></li>
-          <li>Submit a deletion request via email to <a href={PRIVACY_MAILTO}>our Privacy Officer</a></li>
+          <li>Submit a deletion request via email to <a href={PRIVACY_EMAIL_URL} {...EMAIL_LINK_PROPS}>our Privacy Officer</a></li>
           <li>We will acknowledge your request within 5 business days and action it within 30 days</li>
         </ul>
         <p>
@@ -809,7 +815,7 @@ const faqs = [
         </ul>
         <p>
           If you don't receive the email or need further help, contact{" "}
-          <a href={SUPPORT_MAILTO}>{CARENEST_EMAIL}</a>.
+          <a href={SUPPORT_EMAIL_URL} {...EMAIL_LINK_PROPS}>{CARENEST_EMAIL}</a>.
         </p>
       </>
     ),
@@ -847,7 +853,7 @@ const faqs = [
         </ul>
         <p>
           If none of these help, please email{" "}
-          <a href={SUPPORT_MAILTO}>{CARENEST_EMAIL}</a> with a description
+          <a href={SUPPORT_EMAIL_URL} {...EMAIL_LINK_PROPS}>{CARENEST_EMAIL}</a> with a description
           of the issue and your device details.
         </p>
       </>
@@ -863,7 +869,7 @@ const faqs = [
         </p>
         <ul>
           <li>In-app: Go to <strong>Settings → Account → Delete Account</strong></li>
-          <li>By email: Send a deletion request to <a href={PRIVACY_MAILTO}>our Privacy Officer</a></li>
+          <li>By email: Send a deletion request to <a href={PRIVACY_EMAIL_URL} {...EMAIL_LINK_PROPS}>our Privacy Officer</a></li>
         </ul>
         <p>
           Please note: if you are currently employed by an NDIS business using CareNest, your account
@@ -944,7 +950,7 @@ export default function CareNestSupport() {
             color: "#e0f4f9",
             title: "Email Support",
             desc: "Average response within 4 business hours",
-            href: SUPPORT_MAILTO,
+            href: SUPPORT_EMAIL_URL,
             label: "Send Email",
           },
           {
@@ -952,7 +958,7 @@ export default function CareNestSupport() {
             color: "#f5e8e5",
             title: "Privacy Requests",
             desc: "Data access, correction, or deletion requests",
-            href: PRIVACY_MAILTO,
+            href: PRIVACY_EMAIL_URL,
             label: "Contact Privacy",
           },
           {
@@ -960,11 +966,11 @@ export default function CareNestSupport() {
             color: "#e8f5ef",
             title: "Report a Bug",
             desc: "Help us improve CareNest for everyone",
-            href: BUG_REPORT_MAILTO,
+            href: BUG_REPORT_EMAIL_URL,
             label: "Report Issue",
           },
         ].map(({ icon, color, title, desc, href, label }) => (
-          <a className="sp-quick-card" href={href} key={title}>
+          <a className="sp-quick-card" href={href} key={title} {...EMAIL_LINK_PROPS}>
             <div className="sp-quick-icon" style={{ background: color }}>{icon}</div>
             <div className="sp-quick-title">{title}</div>
             <div className="sp-quick-desc">{desc}</div>
@@ -1011,7 +1017,7 @@ export default function CareNestSupport() {
             <div className="sp-no-results">
               <strong>🤔</strong>
               No results found for "{searchQuery}". Try different keywords or{" "}
-              <a href={SUPPORT_MAILTO}>contact our team</a>.
+              <a href={SUPPORT_EMAIL_URL} {...EMAIL_LINK_PROPS}>contact our team</a>.
             </div>
           ) : (
             filteredFaqs.map((faq, i) => (
@@ -1054,7 +1060,7 @@ export default function CareNestSupport() {
               Send us a detailed message and we'll get back to you within 4 business hours
               during AEST/AEDT business hours (Mon–Fri, 9am–5pm).
             </p>
-            <a className="sp-btn sp-btn-primary" href={SUPPORT_MAILTO}>
+            <a className="sp-btn sp-btn-primary" href={SUPPORT_EMAIL_URL} {...EMAIL_LINK_PROPS}>
               📧 {CARENEST_EMAIL}
             </a>
           </div>
@@ -1065,7 +1071,7 @@ export default function CareNestSupport() {
               For data access requests, corrections, deletions, or any privacy concern —
               contact our dedicated Privacy Officer directly.
             </p>
-            <a className="sp-btn sp-btn-outline" href={PRIVACY_MAILTO}>
+            <a className="sp-btn sp-btn-outline" href={PRIVACY_EMAIL_URL} {...EMAIL_LINK_PROPS}>
               🔒 Contact Privacy
             </a>
           </div>
@@ -1107,7 +1113,7 @@ export default function CareNestSupport() {
           <a href="/carenest/privacy-policy" style={{ fontSize: 14, color: "var(--teal-700)", fontWeight: 500 }}>
             Privacy Policy
           </a>
-          <a href={PRIVACY_MAILTO} style={{ fontSize: 14, color: "var(--teal-700)", fontWeight: 500 }}>
+          <a href={PRIVACY_EMAIL_URL} {...EMAIL_LINK_PROPS} style={{ fontSize: 14, color: "var(--teal-700)", fontWeight: 500 }}>
             Request Data Deletion
           </a>
           <a href="https://www.oaic.gov.au" target="_blank" rel="noreferrer" style={{ fontSize: 14, color: "var(--teal-700)", fontWeight: 500 }}>
@@ -1125,7 +1131,7 @@ export default function CareNestSupport() {
       <footer className="sp-footer">
         © {new Date().getFullYear()} CareNest. All rights reserved. &nbsp;|&nbsp;{" "}
         <a href="/carenest/privacy-policy">Privacy Policy</a> &nbsp;|&nbsp;{" "}
-        <a href={SUPPORT_MAILTO}>{CARENEST_EMAIL}</a> &nbsp;|&nbsp;{" "}
+        <a href={SUPPORT_EMAIL_URL} {...EMAIL_LINK_PROPS}>{CARENEST_EMAIL}</a> &nbsp;|&nbsp;{" "}
         Built for Australian NDIS providers 🇦🇺
       </footer>
     </div>

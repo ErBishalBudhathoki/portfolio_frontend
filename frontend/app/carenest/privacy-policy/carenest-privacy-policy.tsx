@@ -433,8 +433,14 @@ const css = `
 `;
 
 const CARENEST_EMAIL = "carenest@bishalbudhathoki.com";
-const SUPPORT_MAILTO = `mailto:${CARENEST_EMAIL}?subject=${encodeURIComponent("CareNest Support Request")}`;
-const PRIVACY_MAILTO = `mailto:${CARENEST_EMAIL}?subject=${encodeURIComponent("CareNest Privacy Request")}`;
+const createGmailComposeUrl = (subject: string) =>
+  `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(CARENEST_EMAIL)}&su=${encodeURIComponent(subject)}`;
+const SUPPORT_EMAIL_URL = createGmailComposeUrl("CareNest Support Request");
+const PRIVACY_EMAIL_URL = createGmailComposeUrl("CareNest Privacy Request");
+const EMAIL_LINK_PROPS = {
+  target: "_blank",
+  rel: "noreferrer",
+} as const;
 
 // ─── Section IDs ──────────────────────────────────────────────────────────────
 const sections = [
@@ -942,7 +948,7 @@ export default function CareNestPrivacyPolicy() {
             <h3 className="pp-subsection-title">How to Exercise Your Rights</h3>
             <ol className="pp-ol">
               <li>Use the in-app settings under <strong>Account → Privacy</strong> for common requests</li>
-              <li>Email our Privacy Officer via <a href={PRIVACY_MAILTO}>Contact Privacy Officer</a></li>
+              <li>Email our Privacy Officer via <a href={PRIVACY_EMAIL_URL} {...EMAIL_LINK_PROPS}>Contact Privacy Officer</a></li>
               <li>We will acknowledge your request within 5 business days and respond fully within 30 days</li>
             </ol>
           </section>
@@ -1006,7 +1012,7 @@ export default function CareNestPrivacyPolicy() {
               We do not knowingly collect personal information from individuals under the age of 18. If we
               become aware that we have inadvertently collected information from a minor, we will promptly
               delete it. If you believe a minor has provided us with personal information, please contact
-              us immediately via <a href={PRIVACY_MAILTO}>Contact Privacy Officer</a>.
+              us immediately via <a href={PRIVACY_EMAIL_URL} {...EMAIL_LINK_PROPS}>Contact Privacy Officer</a>.
             </p>
           </section>
 
@@ -1079,11 +1085,11 @@ export default function CareNestPrivacyPolicy() {
               <h3>CareNest Privacy &amp; Support</h3>
               <div className="pp-contact-row">
                 📧 Privacy inquiries:&nbsp;
-                <a href={PRIVACY_MAILTO}>Contact Privacy Officer</a>
+                <a href={PRIVACY_EMAIL_URL} {...EMAIL_LINK_PROPS}>Contact Privacy Officer</a>
               </div>
               <div className="pp-contact-row">
                 🛟 General support:&nbsp;
-                <a href={SUPPORT_MAILTO}>{CARENEST_EMAIL}</a>
+                <a href={SUPPORT_EMAIL_URL} {...EMAIL_LINK_PROPS}>{CARENEST_EMAIL}</a>
               </div>
               <div className="pp-contact-row">
                 🌐 Support portal:&nbsp;
@@ -1111,7 +1117,7 @@ export default function CareNestPrivacyPolicy() {
       <footer className="pp-footer-bar">
         © {new Date().getFullYear()} CareNest. All rights reserved. &nbsp;|&nbsp;{" "}
         <a href="/carenest/support">Support</a> &nbsp;|&nbsp;{" "}
-        <a href={PRIVACY_MAILTO}>Contact Privacy Officer</a>
+        <a href={PRIVACY_EMAIL_URL} {...EMAIL_LINK_PROPS}>Contact Privacy Officer</a>
       </footer>
     </>
   );
