@@ -36,9 +36,14 @@ gcloud run deploy $SERVICE_NAME \
 # Get the URL of the deployed service
 URL=$(gcloud run services describe $SERVICE_NAME --platform managed --region $REGION --format 'value(status.url)')
 
-# Verify custom domain mappings
+# Verify custom domain mappings when beta commands are available
 echo "🔍 Checking custom domain mappings..."
-MAPPINGS=$(gcloud beta run domain-mappings list --platform managed --region $REGION --filter="SERVICE:$SERVICE_NAME" --format="list(DOMAIN)")
+if MAPPINGS=$(gcloud beta run domain-mappings list --platform managed --region $REGION --filter="SERVICE:$SERVICE_NAME" --format="list(DOMAIN)" 2>/dev/null); then
+  :
+else
+  MAPPINGS=""
+  echo "⚠️ Skipping custom domain mapping check because gcloud beta commands are unavailable."
+fi
 
 echo ""
 echo "✅ Deployment completed!"
