@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+GCLOUD_BIN="${GCLOUD_BIN:-$(command -v gcloud)}"
+
+if [ -z "$GCLOUD_BIN" ]; then
+  echo "gcloud CLI not found in PATH"
+  exit 1
+fi
+
 # Configuration
 PROJECT_ID="portfolio-458717" # Your actual project ID
 SERVICE_NAME="portfolio-backend"
@@ -17,7 +24,7 @@ fi
 
 # Build and push the container image
 echo "Building and pushing backend container image..."
-~/downloads/google-cloud-sdk/bin/gcloud builds submit --tag gcr.io/$PROJECT_ID/$SERVICE_NAME .
+"$GCLOUD_BIN" builds submit --tag gcr.io/$PROJECT_ID/$SERVICE_NAME .
 
 # Construct environment variables
 ENV_ITEMS=("MAIN_MODULE=app.main:app")
@@ -54,7 +61,7 @@ ENV_VARS=$(IFS=,; echo "${ENV_ITEMS[*]}")
 
 # Deploy to Cloud Run with secrets and environment variables
 echo "Deploying to Cloud Run..."
-~/downloads/google-cloud-sdk/bin/gcloud run deploy $SERVICE_NAME \
+"$GCLOUD_BIN" run deploy $SERVICE_NAME \
   --image gcr.io/$PROJECT_ID/$SERVICE_NAME \
   --platform managed \
   --region $REGION \
@@ -71,7 +78,7 @@ echo "Deploying to Cloud Run..."
   --execution-environment=gen2
 
 # Get the URL of the deployed service
-SERVICE_URL=$(~/downloads/google-cloud-sdk/bin/gcloud run services describe $SERVICE_NAME --platform managed --region $REGION --format "value(status.url)")
+SERVICE_URL=$("$GCLOUD_BIN" run services describe $SERVICE_NAME --platform managed --region $REGION --format "value(status.url)")
 echo "Backend deployed successfully at: $SERVICE_URL"
 echo "Save this URL as you'll need it for the frontend deployment!"
 
