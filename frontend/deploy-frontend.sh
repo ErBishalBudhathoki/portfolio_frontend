@@ -15,7 +15,10 @@ echo ""
 
 # Step 1: Build the Docker image using Google Cloud Build
 echo "☁️ Building Docker image using Google Cloud Build..."
-gcloud builds submit --tag gcr.io/$PROJECT_ID/$SERVICE_NAME --build-arg NEXT_PUBLIC_API_URL=$BACKEND_URL .
+gcloud builds submit \
+  --config cloudbuild.yaml \
+  --substitutions _BACKEND_URL="$BACKEND_URL" \
+  .
 
 # Step 2: Deploy to Cloud Run
 echo "🚀 Deploying to Cloud Run..."
