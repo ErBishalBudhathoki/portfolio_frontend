@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import os
+import sys
 from dotenv import load_dotenv
 import json
 from datetime import datetime
@@ -536,10 +537,13 @@ async def startup_event():
                 print(f"❌ Firebase connection failed: {e}")
                 return False
 
+        creds_path = os.getenv("FIREBASE_SERVICE_ACCOUNT", "credentials/firebase-credentials.json")
         print("Checking Firebase connection...")
-        if not check_firebase_connection():
+        if not os.path.exists(creds_path):
+            print(f"Skipping Firebase setup: credentials file not found at {creds_path}")
+        elif not check_firebase_connection():
             print("Attempting to set up Firebase database...")
-            result = subprocess.run(["python", "backend/setup_firebase.py"], capture_output=True, text=True)
+            result = subprocess.run([sys.executable, "setup_firebase.py"], capture_output=True, text=True)
             print(result.stdout)
             if result.returncode != 0:
                 print(f"❌ Firebase setup failed: {result.stderr}")

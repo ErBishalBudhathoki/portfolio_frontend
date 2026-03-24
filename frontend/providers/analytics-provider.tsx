@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect } from 'react';
 import useAnalytics from '@/hooks/useAnalytics';
 
 interface AnalyticsProviderProps {
@@ -9,14 +9,8 @@ interface AnalyticsProviderProps {
 
 export default function AnalyticsProvider({ children }: AnalyticsProviderProps) {
   const { trackEvent } = useAnalytics();
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
     if (typeof window !== 'undefined') {
       (window as any).__analyticsTracker = trackEvent;
     }
@@ -25,9 +19,7 @@ export default function AnalyticsProvider({ children }: AnalyticsProviderProps) 
         delete (window as any).__analyticsTracker;
       }
     };
-  }, [trackEvent, mounted]);
+  }, [trackEvent]);
 
-  // Only render children after mount to avoid hydration mismatch
-  if (!mounted) return null;
   return <>{children}</>;
 } 

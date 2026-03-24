@@ -18,17 +18,19 @@ print("Starting up Portfolio Backend API...")
 print("=========================================")
 
 # Test Firebase connection
-print("Checking Firebase connection...")
-try:
-    # This is safer than importing Firebase modules directly
-    # in case they're not installed
-    result = subprocess.run(
-        [sys.executable, "-c", """
+firebase_credentials = os.getenv("FIREBASE_SERVICE_ACCOUNT", "credentials/firebase-credentials.json")
+if os.path.exists(firebase_credentials):
+    print("Checking Firebase connection...")
+    try:
+        # This is safer than importing Firebase modules directly
+        # in case they're not installed
+        result = subprocess.run(
+            [sys.executable, "-c", f"""
 import firebase_admin
 from firebase_admin import credentials, firestore
 try:
     # Attempt to initialize Firebase
-    cred = credentials.Certificate('credentials/firebase-credentials.json')
+    cred = credentials.Certificate({firebase_credentials!r})
     app = firebase_admin.initialize_app(cred)
     db = firestore.client()
     # Try to access a collection to verify Firestore is set up
@@ -39,34 +41,36 @@ except Exception as e:
     print(f'❌ Firebase connection failed: {str(e)}')
     exit(1)
 """
-        ],
-        capture_output=True,
-        text=True,
-    )
-    
-    # If connection failed, set up Firebase
-    if result.returncode != 0:
-        print(result.stdout.strip())
-        print("Attempting to set up Firebase database...")
-        
-        # Run setup_firebase.py
-        try:
-            setup_result = subprocess.run(
-                [sys.executable, "setup_firebase.py"],
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            print(setup_result.stdout.strip())
-            print("✅ Firebase setup complete!")
-        except subprocess.CalledProcessError as e:
-            print(f"❌ Firebase setup failed: {e}")
-            print(e.stdout)
-            print(e.stderr)
-            # Continue anyway - the app can still start without Firebase
-except Exception as e:
-    print(f"Error during Firebase check: {str(e)}")
-    # Continue anyway - the app can still start without Firebase
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        # If connection failed, set up Firebase
+        if result.returncode != 0:
+            print(result.stdout.strip())
+            print("Attempting to set up Firebase database...")
+
+            # Run setup_firebase.py
+            try:
+                setup_result = subprocess.run(
+                    [sys.executable, "setup_firebase.py"],
+                    capture_output=True,
+                    text=True,
+                    check=True
+                )
+                print(setup_result.stdout.strip())
+                print("✅ Firebase setup complete!")
+            except subprocess.CalledProcessError as e:
+                print(f"❌ Firebase setup failed: {e}")
+                print(e.stdout)
+                print(e.stderr)
+                # Continue anyway - the app can still start without Firebase
+    except Exception as e:
+        print(f"Error during Firebase check: {str(e)}")
+        # Continue anyway - the app can still start without Firebase
+else:
+    print(f"Skipping Firebase check: credentials file not found at {firebase_credentials}")
 
 print(f"\nStarting FastAPI server on {host}:{port}")
 time.sleep(1)

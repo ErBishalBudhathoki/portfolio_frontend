@@ -5,6 +5,8 @@ interface ApiOptions {
   revalidateOnFocus?: boolean;
   revalidateOnReconnect?: boolean;
   dedupingInterval?: number;
+  revalidateIfStale?: boolean;
+  revalidateOnMount?: boolean;
 }
 
 const defaultOptions: ApiOptions = {
@@ -12,6 +14,7 @@ const defaultOptions: ApiOptions = {
   revalidateOnFocus: false, // Don't revalidate when window gets focus
   revalidateOnReconnect: true, // Revalidate when reconnecting after being offline
   dedupingInterval: 60000, // 1 minute deduping interval
+  revalidateIfStale: false,
 };
 
 // Default fetcher that handles API responses and errors
@@ -59,9 +62,10 @@ export function useApi<T>(path: string, options?: ApiOptions) {
     fullUrl,
     defaultFetcher,
     {
-      revalidateIfStale: false,
+      revalidateIfStale: swrOptions.revalidateIfStale,
       revalidateOnFocus: swrOptions.revalidateOnFocus,
       revalidateOnReconnect: swrOptions.revalidateOnReconnect,
+      revalidateOnMount: swrOptions.revalidateOnMount,
       refreshInterval: swrOptions.refreshInterval,
       dedupingInterval: swrOptions.dedupingInterval,
     }

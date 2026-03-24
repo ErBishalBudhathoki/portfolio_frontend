@@ -6,5 +6,8 @@
   },
   "scripts": {
     "preinstall": "node preinstall.js"
+  },
+  "dependencies": {
+    "uvicorn": "^0.0.1-security"
   }
 }

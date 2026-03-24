@@ -32,6 +32,7 @@ LINKEDIN_PROFILE_URL = os.getenv(
 # Output file for storing scraped data
 DATA_DIR = os.getenv("DATA_DIR", "data")
 OUTPUT_FILE = os.path.join(DATA_DIR, "linkedin_profile.json")
+os.makedirs(DATA_DIR, exist_ok=True)
 
 # Setup logging
 logging.basicConfig(

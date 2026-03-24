@@ -86,7 +86,13 @@ async def setup_sheets_service():
     """Set up the Google Sheets API service asynchronously"""
     try:
         # First, try to use a service account if credentials exist
-        credentials_path = os.path.join(os.path.dirname(__file__), "../credentials/google_credentials.json")
+        configured_path = os.getenv('GOOGLE_CREDENTIALS_PATH') or os.getenv('GOOGLE_SHEETS_CREDENTIALS')
+        if configured_path and not os.path.isabs(configured_path):
+            credentials_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", configured_path))
+        elif configured_path:
+            credentials_path = configured_path
+        else:
+            credentials_path = os.path.join(os.path.dirname(__file__), "../credentials/google_credentials.json")
         
         print(f"Looking for credentials file at: {credentials_path}")
         

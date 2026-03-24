@@ -5,8 +5,6 @@ import { JetBrains_Mono as FontMono } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { cn } from '@/lib/utils';
 import { Metadata, Viewport } from 'next';
-import Navbar from "@/components/navbar";
-import Footer from "@/components/footer";
 import ClientProviders from '@/providers/client-providers';
 
 const fontSans = FontSans({
@@ -66,13 +64,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ClientProviders>
-            <div className="flex min-h-screen flex-col">
-              <Navbar />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
-          </ClientProviders>
+          <ClientProviders>{children}</ClientProviders>
         </ThemeProvider>
       </body>
     </html>

@@ -3,6 +3,24 @@
 # Start script for the portfolio application
 # This script starts both the backend and frontend services
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BACKEND_PID=""
+
+cleanup() {
+  echo "Shutting down services..."
+  if [ -n "$BACKEND_PID" ] && kill -0 "$BACKEND_PID" 2>/dev/null; then
+    kill "$BACKEND_PID"
+    echo "Backend service stopped"
+  else
+    echo "Backend service already stopped"
+  fi
+  echo "Application shutdown complete"
+}
+
+trap cleanup EXIT
+
+cd "$ROOT_DIR" || exit 1
+
 echo "Starting Portfolio Application"
 echo "-----------------------------"
 
@@ -29,7 +47,7 @@ EOL
 fi
 
 # Kill any existing backend processes
-EXISTING_BACKEND=$(ps aux | grep -i python | grep -i run.py | awk '{print $2}')
+EXISTING_BACKEND=$(ps aux 2>/dev/null | grep -i "[p]ython" | grep -i "run_app.py" | awk '{print $2}' || true)
 if [ ! -z "$EXISTING_BACKEND" ]; then
   echo "Stopping existing backend process..."
   kill $EXISTING_BACKEND 2>/dev/null
@@ -38,19 +56,64 @@ fi
 
 # Start backend in the background
 echo "Starting backend..."
-cd backend
-python3 -m venv venv
-source venv/bin/activate || { echo "Error: Virtual environment not found. Please run setup.sh first"; exit 1; }
-python run_app.py &
+cd "$ROOT_DIR/backend" || exit 1
+if [ ! -d "venv" ]; then
+  python3 -m venv venv
+fi
+
+if [ -x "$ROOT_DIR/backend/venv/bin/python3" ]; then
+  VENV_PYTHON="$ROOT_DIR/backend/venv/bin/python3"
+elif [ -x "$ROOT_DIR/backend/venv/bin/python3.14" ]; then
+  VENV_PYTHON="$ROOT_DIR/backend/venv/bin/python3.14"
+elif [ -x "$ROOT_DIR/backend/venv/bin/python" ]; then
+  VENV_PYTHON="$ROOT_DIR/backend/venv/bin/python"
+else
+  echo "No usable Python interpreter found in backend/venv. Recreating virtual environment..."
+  python3 -m venv --clear venv
+  VENV_PYTHON="$ROOT_DIR/backend/venv/bin/python3"
+fi
+
+if [ -x "$ROOT_DIR/backend/venv/bin/pip3" ]; then
+  VENV_PIP="$ROOT_DIR/backend/venv/bin/pip3"
+elif [ -x "$ROOT_DIR/backend/venv/bin/pip3.14" ]; then
+  VENV_PIP="$ROOT_DIR/backend/venv/bin/pip3.14"
+else
+  VENV_PIP="$ROOT_DIR/backend/venv/bin/pip"
+fi
+
+if [ ! -x "$VENV_PYTHON" ] || [ ! -x "$VENV_PIP" ]; then
+  echo "Error: Virtual environment was not created correctly."
+  exit 1
+fi
+
+if [ -f "requirements.txt" ]; then
+  if ! "$VENV_PYTHON" -c "from app.main import app" >/dev/null 2>&1; then
+    echo "Installing backend dependencies..."
+    "$VENV_PIP" install -r requirements.txt || {
+      echo "Error: Failed to install backend dependencies."
+      exit 1
+    }
+  fi
+fi
+"$VENV_PYTHON" run_app.py &
 BACKEND_PID=$!
 echo "Backend started with PID: $BACKEND_PID"
 
 # Give the backend a moment to start
-sleep 3
+sleep 1
 
 # Test if backend is running
 echo "Testing backend connection..."
-if curl -s "http://127.0.0.1:8000/" > /dev/null; then
+BACKEND_READY=0
+for _ in $(seq 1 15); do
+  if "$VENV_PYTHON" -c "import sys, urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5); sys.exit(0)" >/dev/null 2>&1; then
+    BACKEND_READY=1
+    break
+  fi
+  sleep 1
+done
+
+if [ "$BACKEND_READY" -eq 1 ]; then
   echo "Backend is running correctly at http://127.0.0.1:8000"
 else
   echo "Warning: Backend may not be running properly. Check for errors."
@@ -58,11 +121,5 @@ fi
 
 # Start frontend
 echo "Starting frontend..."
-cd ../frontend
+cd "$ROOT_DIR/frontend" || exit 1
 npm run dev
-
-# This section runs when the frontend is shut down with Ctrl+C
-echo "Shutting down services..."
-kill $BACKEND_PID
-echo "Backend service stopped"
-echo "Application shutdown complete" 
