@@ -13,6 +13,62 @@ SHEET_SKILLS = "Skills"
 SHEET_PROJECTS = "Projects"
 SHEET_CERTIFICATIONS = "Certifications"
 
+DEFAULT_CATEGORY_ORDER = {
+    "Frontend": 1,
+    "Frontend Development": 1,
+    "Mobile": 2,
+    "Mobile Development": 2,
+    "Backend": 3,
+    "Backend Development": 3,
+    "Database": 4,
+    "DevOps/Cloud": 5,
+    "Cloud Platform": 5,
+    "DevOps Tool": 5,
+    "AI/ML": 6,
+    "Artificial Intelligence": 6,
+    "Machine Learning": 6,
+    "Other": 99,
+}
+
+SKILL_ICON_MAP = {
+    "JavaScript": "js",
+    "TypeScript": "ts",
+    "Python": "py",
+    "Java": "java",
+    "Kotlin": "kotlin",
+    "Flutter": "flutter",
+    "Android": "androidstudio",
+    "Android Studio": "androidstudio",
+    "React": "react",
+    "React.js": "react",
+    "Next.js": "nextjs",
+    "HTML": "html",
+    "CSS": "css",
+    "Tailwind CSS": "tailwind",
+    "Node.js": "nodejs",
+    "Express": "express",
+    "FastAPI": "fastapi",
+    "Firebase": "firebase",
+    "MongoDB": "mongodb",
+    "PostgreSQL": "postgres",
+    "MySQL": "mysql",
+    "AWS": "aws",
+    "Google Cloud": "gcp",
+    "Google Cloud Infrastructure": "gcp",
+    "Docker": "docker",
+    "Git": "git",
+    "Github": "github",
+    "Machine Learning": "pytorch",
+    "Artificial Intelligence": "ai",
+    "TensorFlow": "tensorflow",
+    "PyTorch": "pytorch",
+    "VS Code": "vscode",
+    "Visual Studio": "visualstudio",
+    "PyCharm": "pycharm",
+    "IntelliJ IDEA": "idea",
+    "Eclipse": "eclipse",
+}
+
 async def save_linkedin_data_to_sheet(profile_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Save LinkedIn profile data to Google Sheets with improved structure
@@ -179,31 +235,37 @@ def save_education_data(service, education: List[Dict[str, str]]):
 def save_skills_data(service, skills: List[Dict[str, Any]]):
     """Save skills data to its own worksheet"""
     # Define headers
-    headers = ["Skill", "Category", "Endorsements"]
+    headers = ["Skill", "Category", "Endorsements", "Icon", "Category Order", "Skill Order"]
     
     # Define data rows with categorization
     rows = []
-    for skill_item in skills:
+    for index, skill_item in enumerate(skills, start=1):
         # Skills might be a dictionary with 'name' field, or directly a string
         if isinstance(skill_item, dict):
             skill_name = skill_item.get("name", "")
             endorsements = skill_item.get("endorsements", 0)
+            category = skill_item.get("category", "") or categorize_skill(str(skill_name))
+            icon = skill_item.get("icon", "") or get_skill_icon_id(str(skill_name))
+            category_order = skill_item.get("category_order", DEFAULT_CATEGORY_ORDER.get(category, 50))
+            skill_order = skill_item.get("skill_order", index)
         else:
             skill_name = str(skill_item)
             endorsements = 0
+            category = categorize_skill(skill_name)
+            icon = get_skill_icon_id(skill_name)
+            category_order = DEFAULT_CATEGORY_ORDER.get(category, 50)
+            skill_order = index
         
         # Make sure we have a string for skill_name
         if not isinstance(skill_name, str):
             skill_name = str(skill_name)
-            
-        # Determine category based on skill name
-        category = categorize_skill(skill_name)
-        rows.append([skill_name, category, endorsements])
+
+        rows.append([skill_name, category, endorsements, icon, category_order, skill_order])
     
     # Clear existing data
     service.spreadsheets().values().clear(
         spreadsheetId=SHEET_ID,
-        range=f"{SHEET_SKILLS}!A:C"
+        range=f"{SHEET_SKILLS}!A:F"
     ).execute()
     
     # Update headers
@@ -222,6 +284,10 @@ def save_skills_data(service, skills: List[Dict[str, Any]]):
             valueInputOption="RAW",
             body={"values": rows}
         ).execute()
+
+def get_skill_icon_id(skill: str) -> str:
+    """Return a skillicons.dev icon id for a skill when we know it."""
+    return SKILL_ICON_MAP.get(skill.strip(), "")
 
 def categorize_skill(skill: str) -> str:
     """Categorize skills based on keywords"""
@@ -492,19 +558,22 @@ async def get_linkedin_data_from_sheet() -> Optional[Dict[str, Any]]:
             profile_data['education'] = education_list
             print(f"Processed {len(education_list)} education entries")
         
-        # Process skills - has column headers Skill, Category, Endorsements
+        # Process skills - supports Skill, Category, Endorsements, Icon, Category Order, Skill Order
         if skills_data and len(skills_data) > 0:
             skills_list = []
             
             # Get headers from first row
             headers = []
             if len(skills_data) > 0:
-                headers = [h.lower() for h in skills_data[0]]
+                headers = [h.lower().strip().replace(" ", "_") for h in skills_data[0]]
             
             # Map header indices
             skill_idx = headers.index('skill') if 'skill' in headers else -1
             category_idx = headers.index('category') if 'category' in headers else -1
             endorsements_idx = headers.index('endorsements') if 'endorsements' in headers else -1
+            icon_idx = headers.index('icon') if 'icon' in headers else -1
+            category_order_idx = headers.index('category_order') if 'category_order' in headers else -1
+            skill_order_idx = headers.index('skill_order') if 'skill_order' in headers else -1
             
             # Process rows (skip header)
             for row in skills_data[1:]:
@@ -519,10 +588,25 @@ async def get_linkedin_data_from_sheet() -> Optional[Dict[str, Any]]:
                         # Add category if available
                         if category_idx >= 0 and category_idx < len(row):
                             skill['category'] = row[category_idx]
+                        else:
+                            skill['category'] = categorize_skill(row[skill_idx])
                             
                         # Add endorsements if available
                         if endorsements_idx >= 0 and endorsements_idx < len(row):
                             skill['endorsements'] = row[endorsements_idx]
+                        
+                        if icon_idx >= 0 and icon_idx < len(row):
+                            skill['icon'] = row[icon_idx]
+                        else:
+                            skill['icon'] = get_skill_icon_id(row[skill_idx])
+
+                        if category_order_idx >= 0 and category_order_idx < len(row):
+                            skill['category_order'] = row[category_order_idx]
+                        else:
+                            skill['category_order'] = DEFAULT_CATEGORY_ORDER.get(skill.get('category', 'Other'), 50)
+
+                        if skill_order_idx >= 0 and skill_order_idx < len(row):
+                            skill['skill_order'] = row[skill_order_idx]
                             
                         skills_list.append(skill)
             
