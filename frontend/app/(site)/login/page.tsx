@@ -6,18 +6,36 @@ import { useRouter } from 'next/navigation';
 export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Compare with environment variable
-    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
-      // Set cookie with secure attributes
-      document.cookie = `admin_token=${process.env.NEXT_PUBLIC_ADMIN_TOKEN}; path=/; max-age=86400; SameSite=Strict; ${window.location.protocol === 'https:' ? 'Secure;' : ''}`;
+
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setError(data.error || 'Unable to sign in.');
+        return;
+      }
+
       router.push('/admin/analytics');
-    } else {
-      setError('Invalid password');
+      router.refresh();
+    } catch {
+      setError('Unable to sign in right now.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -53,9 +71,10 @@ export default function LoginPage() {
           <div>
             <button
               type="submit"
+              disabled={isSubmitting}
               className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
             >
-              Sign in
+              {isSubmitting ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
         </form>
