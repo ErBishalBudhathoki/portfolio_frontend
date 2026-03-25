@@ -96,6 +96,26 @@ const css = `
     margin: 0 auto 36px;
     line-height: 1.6;
   }
+  .sp-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin: 0 auto 28px;
+    max-width: 760px;
+  }
+  .sp-hero-meta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    color: rgba(255,255,255,0.86);
+    font-size: 13px;
+    font-weight: 500;
+  }
 
   /* Search bar */
   .sp-search-wrap {
@@ -478,6 +498,7 @@ const EMAIL_LINK_PROPS = {
   rel: "noreferrer",
 } as const;
 const GOOGLE_PLAY_URL = "https://play.google.com/store/apps/details?id=com.bishal.invoice";
+const LAST_UPDATED = "25 March 2026";
 
 // ─── FAQ Data ─────────────────────────────────────────────────────────────────
 const faqs = [
@@ -918,12 +939,17 @@ export default function CareNestSupport() {
       {/* ── HERO ── */}
       <header className="sp-hero">
         <div className="sp-hero-inner">
-          <div className="sp-badge">🛟 Help & Support</div>
-          <h1 className="sp-hero-title">How Can We Help?</h1>
+          <div className="sp-badge">🛟 CareNest Support</div>
+          <h1 className="sp-hero-title">CareNest Support</h1>
           <p className="sp-hero-sub">
-            Find answers to common questions about CareNest, or get in touch with our
-            Australian support team.
+            Get help with account access, scheduling, invoices, notifications, messaging,
+            bugs, account deletion, and privacy questions for the CareNest iOS and Android app.
           </p>
+          <div className="sp-hero-meta">
+            <span className="sp-hero-meta-chip">📅 Last updated: {LAST_UPDATED}</span>
+            <span className="sp-hero-meta-chip">📧 {CARENEST_EMAIL}</span>
+            <span className="sp-hero-meta-chip">⏱ Response time: within 2 business days</span>
+          </div>
           <div className="sp-search-wrap">
             <span className="sp-search-icon">🔍</span>
             <input
@@ -949,7 +975,7 @@ export default function CareNestSupport() {
             icon: "📧",
             color: "#e0f4f9",
             title: "Email Support",
-            desc: "Average response within 4 business hours",
+            desc: "Help with access, scheduling, billing, messages, and app issues",
             href: SUPPORT_EMAIL_URL,
             label: "Send Email",
           },
@@ -1057,8 +1083,8 @@ export default function CareNestSupport() {
             <span className="sp-contact-card-icon">📬</span>
             <h3>Email Our Team</h3>
             <p>
-              Send us a detailed message and we'll get back to you within 4 business hours
-              during AEST/AEDT business hours (Mon–Fri, 9am–5pm).
+              Send us a detailed message and we aim to respond within 2 business days.
+              Include your account email, organisation name or code, device details, and screenshots if available.
             </p>
             <a className="sp-btn sp-btn-primary" href={SUPPORT_EMAIL_URL} {...EMAIL_LINK_PROPS}>
               📧 {CARENEST_EMAIL}

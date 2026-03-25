@@ -441,6 +441,7 @@ const EMAIL_LINK_PROPS = {
   target: "_blank",
   rel: "noreferrer",
 } as const;
+const LAST_UPDATED = "25 March 2026";
 
 // ─── Section IDs ──────────────────────────────────────────────────────────────
 const sections = [
@@ -482,15 +483,15 @@ export default function CareNestPrivacyPolicy() {
       {/* ── HEADER ── */}
       <header className="pp-header">
         <div className="pp-header-inner">
-          <div className="pp-badge">🔒 Privacy Policy</div>
-          <h1 className="pp-title">Your Privacy Matters to Us</h1>
+          <div className="pp-badge">🔒 CareNest Privacy Policy</div>
+          <h1 className="pp-title">CareNest Privacy Policy</h1>
           <p className="pp-subtitle">
-            CareNest is built for NDIS businesses and the care workers who power them.
-            This policy explains exactly what data we collect, why, and how it's protected.
+            This page explains what information CareNest collects, how we use it,
+            how long we retain it, and how users can request account deletion or privacy help.
           </p>
           <div className="pp-meta">
-            <div className="pp-meta-item">📅 Effective: <span>1 July 2025</span></div>
-            <div className="pp-meta-item">🔄 Last updated: <span>23 March 2026</span></div>
+            <div className="pp-meta-item">🔄 Last updated: <span>{LAST_UPDATED}</span></div>
+            <div className="pp-meta-item">📧 Privacy support: <span>{CARENEST_EMAIL}</span></div>
             <div className="pp-meta-item">🇦🇺 Jurisdiction: <span>Australia</span></div>
           </div>
           <div className="pp-platforms">
@@ -532,6 +533,11 @@ export default function CareNestPrivacyPolicy() {
               and web platform designed exclusively for registered NDIS (National Disability Insurance
               Scheme) service providers in Australia. CareNest helps NDIS businesses manage client and
               employee onboarding, rostering, communications, invoicing, and payroll.
+            </p>
+            <p>
+              This Privacy Policy covers CareNest on iOS, Android, and the web. It is intended for
+              business administrators, support workers, clients, and authorised family members using
+              the product.
             </p>
             <p>
               This Privacy Policy applies to all users of the CareNest application, including business
@@ -1085,7 +1091,7 @@ export default function CareNestPrivacyPolicy() {
               <h3>CareNest Privacy &amp; Support</h3>
               <div className="pp-contact-row">
                 📧 Privacy inquiries:&nbsp;
-                <a href={PRIVACY_EMAIL_URL} {...EMAIL_LINK_PROPS}>Contact Privacy Officer</a>
+                <a href={PRIVACY_EMAIL_URL} {...EMAIL_LINK_PROPS}>{CARENEST_EMAIL}</a>
               </div>
               <div className="pp-contact-row">
                 🛟 General support:&nbsp;
