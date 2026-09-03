@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Dict, Any, List, Optional
 from .google_sheet import setup_sheets_service
 
@@ -312,7 +313,7 @@ def categorize_skill(skill: str) -> str:
         return "Database"
     elif any(keyword in skill for keyword in ["aws", "azure", "gcp", "cloud", "docker", "kubernetes", "devops", "ci/cd", "jenkins"]):
         return "DevOps/Cloud"
-    elif any(keyword in skill for keyword in ["ai", "ml", "machine learning", "data science", "tensorflow", "pytorch", "pandas"]):
+    elif re.search(r"\b(ai|ml)\b", skill) or any(keyword in skill for keyword in ["machine learning", "data science", "tensorflow", "pytorch", "pandas"]):
         return "AI/ML"
     else:
         return "Other"
