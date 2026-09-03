@@ -396,7 +396,7 @@ def _set_cached_activity(username: str, payload: Dict[str, Any]) -> None:
 
 
 async def get_github_activity(username: Optional[str] = None) -> Dict[str, Any]:
-    resolved_username = (username or GITHUB_USERNAME or "BishalBudhathoki").strip() or "BishalBudhathoki"
+    resolved_username = (username or "").strip() or GITHUB_USERNAME or "BishalBudhathoki"
     cached = _get_cached_activity(resolved_username)
     if cached:
         return cached
