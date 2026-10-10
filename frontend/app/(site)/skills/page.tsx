@@ -540,6 +540,8 @@ export default async function SkillsPage() {
   const githubYears = githubActivity?.available ? githubActivity.years : [];
   const recentRepositories = githubActivity?.recent_repositories || [];
   const isGraphqlSource = githubActivity?.source === "graphql";
+  const githubProfileUrl =
+    process.env.NEXT_PUBLIC_GITHUB_URL || "https://github.com/ErBishalBudhathoki";
 
   return (
     <div className="relative overflow-hidden bg-background">
@@ -662,7 +664,7 @@ export default async function SkillsPage() {
                   {recentRepositories.map((repository) => (
                     <a
                       key={repository.name_with_owner || repository.url}
-                      href={repository.url || githubActivity?.profile_url || "https://github.com/BishalBudhathoki"}
+                      href={repository.url || githubActivity?.profile_url || githubProfileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/90 px-3 py-1.5 text-sm text-foreground shadow-sm transition-colors hover:border-primary/30 hover:text-primary"
@@ -719,7 +721,7 @@ export default async function SkillsPage() {
                         </div>
 
                         <a
-                          href={githubActivity?.profile_url || "https://github.com/BishalBudhathoki"}
+                          href={githubActivity?.profile_url || githubProfileUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-border/70 bg-background/85 text-foreground transition-colors hover:border-primary/30 hover:text-primary"
@@ -827,7 +829,7 @@ export default async function SkillsPage() {
                   </p>
                 </div>
                 <a
-                  href={githubActivity?.profile_url || "https://github.com/BishalBudhathoki"}
+                  href={githubActivity?.profile_url || githubProfileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-border/70 bg-background/85 text-foreground transition-colors hover:border-primary/30 hover:text-primary"
