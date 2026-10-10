@@ -1,7 +1,11 @@
-# Keep local build artifacts out of the Cloud Build upload
+# Keep local build artifacts and local-only env out of the Cloud Build upload.
+# .env.local points at localhost and must never win over .env in production builds.
 node_modules/
 .next/
 .next*/
 out/
+.env.local
+.env.development
+.env.test
 *.log
 .DS_Store

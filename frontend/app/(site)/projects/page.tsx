@@ -2,9 +2,8 @@
 
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import Link from "next/link";
-import { GitFork, ExternalLink, Code2, Github } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExternalLink, Code2, Github } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useApi } from "@/hooks/useApi";
 
@@ -14,6 +13,8 @@ interface Project {
   date_range?: string;
   url?: string;
   repository?: string;
+  live_demo?: string;
+  image?: string;
   technologies?: string[];
   name?: string;
 }
@@ -186,6 +187,117 @@ function extractTechnologiesFromDescription(description: string): string[] {
   );
 }
 
+const MEDIA_GRADIENTS = [
+  "from-primary/15 via-primary/5 to-transparent",
+  "from-emerald-500/15 via-emerald-500/5 to-transparent",
+  "from-sky-500/15 via-sky-500/5 to-transparent",
+  "from-amber-500/15 via-amber-500/5 to-transparent",
+];
+
+function ProjectMonogram({ title, index }: { title: string; index: number }) {
+  const initials = title
+    .split(/\s+/)
+    .map((word) => word[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  return (
+    <div
+      className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${
+        MEDIA_GRADIENTS[index % MEDIA_GRADIENTS.length]
+      }`}
+      aria-hidden="true"
+    >
+      <span className="text-5xl font-semibold tracking-tight text-foreground/25">{initials}</span>
+    </div>
+  );
+}
+
+function ProjectCard({ project, index }: { project: Project; index: number }) {
+  const title = project.title || project.name || "Project";
+  const repository = project.repository || (project.url?.includes("github.com") ? project.url : undefined);
+  const liveDemo = project.live_demo;
+  const [imageFailed, setImageFailed] = React.useState(false);
+
+  return (
+    <Card
+      key={index}
+      className="group flex flex-col overflow-hidden rounded-[1.75rem] border-border/70 bg-card/95 shadow-[0_18px_50px_rgba(20,24,62,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_60px_rgba(20,24,62,0.12)]"
+    >
+      {/* Media header: project image from the sheet, monogram fallback */}
+      <div className="relative h-44 w-full overflow-hidden border-b border-border/60">
+        {project.image && !imageFailed ? (
+          <img
+            src={project.image}
+            alt={`${title} preview`}
+            loading="lazy"
+            onError={() => setImageFailed(true)}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <ProjectMonogram title={title} index={index} />
+        )}
+        {project.date_range && (
+          <span className="absolute right-3 top-3 rounded-full border border-border/70 bg-background/85 px-3 py-1 text-xs text-muted-foreground shadow-sm backdrop-blur">
+            {project.date_range}
+          </span>
+        )}
+      </div>
+
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xl transition-colors group-hover:text-primary">{title}</CardTitle>
+      </CardHeader>
+
+      <CardContent className="flex grow flex-col">
+        <p className="mb-4 line-clamp-5 grow text-sm leading-7 text-muted-foreground">
+          {project.description}
+        </p>
+
+        {project.technologies && project.technologies.length > 0 && (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {project.technologies.map((tech, techIndex) => (
+              <Badge
+                key={techIndex}
+                variant="outline"
+                className="rounded-full border-border/70 px-2.5 py-0.5 text-xs text-muted-foreground"
+              >
+                {tech}
+              </Badge>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-auto flex flex-wrap items-center gap-3">
+          {repository && (
+            <a
+              href={repository}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+            >
+              <Github className="h-4 w-4" />
+              Repository
+            </a>
+          )}
+
+          {liveDemo && (
+            <a
+              href={liveDemo}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/85 px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Live Demo
+            </a>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ProjectsPage() {
   const { data: profileData, error, isLoading } = useApi<ProfileData>('/profile', {
     dedupingInterval: 300000, // 5 minutes cache
@@ -239,62 +351,9 @@ export default function ProjectsPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
           {projects.map((project, index) => (
-            <Card 
-              key={index}
-              className="overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col"
-            >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xl">{project.title}</CardTitle>
-                {project.date_range && (
-                  <CardDescription className="text-muted-foreground text-sm">
-                    {project.date_range}
-                  </CardDescription>
-                )}
-              </CardHeader>
-              <CardContent className="flex-grow flex flex-col">
-                <p className="text-muted-foreground mb-4 text-sm flex-grow">
-                  {project.description}
-                </p>
-                
-                {project.technologies && project.technologies.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2 mb-4">
-                    {project.technologies.map((tech, techIndex) => (
-                      <Badge key={techIndex} variant="outline">
-                        {tech}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-                
-                <div className="flex space-x-3 mt-auto">
-                  {project.url && (
-                    <Link 
-                      href={project.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm flex items-center text-foreground hover:text-accent-foreground transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4 mr-1" /> 
-                      Live Demo
-                    </Link>
-                  )}
-                  
-                  {project.repository && (
-                    <Link 
-                      href={project.repository} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm flex items-center text-foreground hover:text-accent-foreground transition-colors"
-                    >
-                      <Github className="w-4 h-4 mr-1" /> 
-                      Repository
-                    </Link>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <ProjectCard key={project.name || index} project={project} index={index} />
           ))}
         </div>
       )}

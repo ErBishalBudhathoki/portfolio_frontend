@@ -319,24 +319,35 @@ def categorize_skill(skill: str) -> str:
         return "Other"
 
 def save_projects_data(service, projects: List[Dict[str, str]]):
-    """Save projects data to its own worksheet"""
+    """Save projects data to its own worksheet.
+
+    Repository, Live Demo, and Image are curated columns that a LinkedIn
+    re-scrape cannot produce, so existing values are preserved by project name.
+    """
     # Define headers
-    headers = ["Name", "Date Range", "Description", "URL"]
-    
+    headers = ["Name", "Date Range", "Description", "Repository", "Live Demo", "Image"]
+
+    # Existing curated values, keyed by lowercased project name
+    existing_projects = _read_existing_projects(service)
+
     # Define data rows
     rows = []
     for project in projects:
+        name = project.get("name", "")
+        existing = existing_projects.get(name.strip().lower(), {})
         rows.append([
-            project.get("name", ""),
-            project.get("date_range", ""),
-            project.get("description", ""),
-            project.get("url", "")
+            name,
+            project.get("date_range", "") or existing.get("date_range", ""),
+            project.get("description", "") or existing.get("description", ""),
+            project.get("repository", "") or existing.get("repository", ""),
+            project.get("live_demo", "") or project.get("url", "") or existing.get("live_demo", ""),
+            project.get("image", "") or existing.get("image", "")
         ])
-    
+
     # Clear existing data
     service.spreadsheets().values().clear(
         spreadsheetId=SHEET_ID,
-        range=f"{SHEET_PROJECTS}!A:D"
+        range=f"{SHEET_PROJECTS}!A:F"
     ).execute()
     
     # Update headers
@@ -355,6 +366,38 @@ def save_projects_data(service, projects: List[Dict[str, str]]):
             valueInputOption="RAW",
             body={"values": rows}
         ).execute()
+
+def _read_existing_projects(service) -> Dict[str, Dict[str, str]]:
+    """Read the Projects worksheet into a name -> curated-values mapping."""
+    rows = get_sheet_data(service, SHEET_PROJECTS, "A1:F1000")
+    if not rows or len(rows) < 2:
+        return {}
+
+    headers = [h.strip().lower() for h in rows[0]]
+    try:
+        repository_idx = headers.index("repository")
+    except ValueError:
+        repository_idx = -1
+    try:
+        live_demo_idx = headers.index("live demo")
+    except ValueError:
+        live_demo_idx = -1
+    try:
+        image_idx = headers.index("image")
+    except ValueError:
+        image_idx = -1
+
+    existing: Dict[str, Dict[str, str]] = {}
+    for row in rows[1:]:
+        if not row or not row[0].strip():
+            continue
+        name = row[0].strip().lower()
+        existing[name] = {
+            "repository": row[repository_idx] if 0 <= repository_idx < len(row) else "",
+            "live_demo": row[live_demo_idx] if 0 <= live_demo_idx < len(row) else "",
+            "image": row[image_idx] if 0 <= image_idx < len(row) else "",
+        }
+    return existing
 
 def save_certifications_data(service, certifications: List[Dict[str, str]]):
     """Save certifications data to its own worksheet"""
@@ -625,42 +668,53 @@ async def get_linkedin_data_from_sheet() -> Optional[Dict[str, Any]]:
             profile_data['skills'] = skills_list
             print(f"Processed {len(skills_list)} skills")
         
-        # Process projects - has column headers Name, Date Range, Description, URL
+        # Process projects - column headers: Name, Date Range, Description,
+        # Repository, Live Demo, Image (legacy "URL" reads as the live demo)
         if projects_data and len(projects_data) > 0:
             projects_list = []
-            
+
             # Get headers from first row
             headers = []
             if len(projects_data) > 0:
                 headers = [h.lower() for h in projects_data[0]]
-            
+
             # Map header indices
             name_idx = headers.index('name') if 'name' in headers else -1
             date_range_idx = headers.index('date range') if 'date range' in headers else -1
             description_idx = headers.index('description') if 'description' in headers else -1
-            url_idx = headers.index('url') if 'url' in headers else -1
-            
+            repository_idx = headers.index('repository') if 'repository' in headers else -1
+            live_demo_idx = headers.index('live demo') if 'live demo' in headers else (
+                headers.index('url') if 'url' in headers else -1
+            )
+            image_idx = headers.index('image') if 'image' in headers else -1
+
             # Process rows (skip header)
             for row in projects_data[1:]:
                 if row and len(row) > 0:  # Skip empty rows
                     project = {}
-                    
+
                     # Get data based on header indices
                     if name_idx >= 0 and name_idx < len(row):
                         project['name'] = row[name_idx]
-                        
+
                     if date_range_idx >= 0 and date_range_idx < len(row):
                         project['date_range'] = row[date_range_idx]
-                        
+
                     if description_idx >= 0 and description_idx < len(row):
                         project['description'] = row[description_idx]
-                        
-                    if url_idx >= 0 and url_idx < len(row):
-                        project['url'] = row[url_idx]
-                    
+
+                    if repository_idx >= 0 and repository_idx < len(row):
+                        project['repository'] = row[repository_idx]
+
+                    if live_demo_idx >= 0 and live_demo_idx < len(row):
+                        project['live_demo'] = row[live_demo_idx]
+
+                    if image_idx >= 0 and image_idx < len(row):
+                        project['image'] = row[image_idx]
+
                     if project:  # Only add non-empty items
                         projects_list.append(project)
-                    
+
             profile_data['projects'] = projects_list
             print(f"Processed {len(projects_list)} projects")
         
@@ -732,7 +786,7 @@ async def ensure_linkedin_sheet_exists():
                 "Experience": ["Company", "Role", "Date Range", "Description"],
                 "Education": ["School", "Degree", "Date Range"],
                 "Skills": ["Skill", "Category", "Endorsements"],
-                "Projects": ["Name", "Date Range", "Description", "URL"],
+                "Projects": ["Name", "Date Range", "Description", "Repository", "Live Demo", "Image"],
                 "Certifications": ["Name", "Organization", "Date", "URL"],
                 "cv_url": ["CV_URL"]  # Special sheet for CV URL
             }
