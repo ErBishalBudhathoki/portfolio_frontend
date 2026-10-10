@@ -1,0 +1,7 @@
+# Keep local build artifacts out of the Cloud Build upload
+node_modules/
+.next/
+.next*/
+out/
+*.log
+.DS_Store

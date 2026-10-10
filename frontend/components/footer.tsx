@@ -15,7 +15,7 @@ interface ProfileData {
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-  const githubUrl = process.env.NEXT_PUBLIC_GITHUB_URL || "https://github.com/BishalBudhathoki";
+  const githubUrl = process.env.NEXT_PUBLIC_GITHUB_URL || "https://github.com/ErBishalBudhathoki";
   const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || "https://www.linkedin.com/in/bishalbudhathoki/";
   const twitterUrl = process.env.NEXT_PUBLIC_TWITTER_URL || "https://x.com/bis2vis?s=21";
 

@@ -120,7 +120,7 @@ LINKEDIN_EMAIL=your-email@example.com
 LINKEDIN_PASSWORD=your-password
 
 # Github URL
-GITHUB_URL=https://github.com/bishalbudhathoki
+GITHUB_URL=https://github.com/ErBishalBudhathoki
 
 # Google Sheet ID (from URL)
 GOOGLE_CREDENTIALS_PATH=credentials/google_credentials.json

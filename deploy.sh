@@ -41,7 +41,7 @@ echo "🔄 Updating Cloud Run service..."
   --cpu 1 \
   --min-instances 0 \
   --max-instances 10 \
-  --set-env-vars NEXT_PUBLIC_API_URL="$BACKEND_URL"
+  --set-env-vars NEXT_PUBLIC_API_URL="$BACKEND_URL",NEXT_PUBLIC_GITHUB_URL="${NEXT_PUBLIC_GITHUB_URL:-https://github.com/ErBishalBudhathoki}"
 
 # Get the service URL
 SERVICE_URL=$("$GCLOUD_BIN" run services describe $SERVICE_NAME --region $REGION --format 'value(status.url)')

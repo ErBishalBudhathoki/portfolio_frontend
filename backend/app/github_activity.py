@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 GITHUB_GRAPHQL_URL = "https://api.github.com/graphql"
 GITHUB_REST_API_URL = "https://api.github.com"
 GITHUB_PUBLIC_CONTRIBUTIONS_URL = "https://github.com/users/{username}/contributions"
-GITHUB_USERNAME = os.getenv("GITHUB_USERNAME", "BishalBudhathoki")
+GITHUB_USERNAME = os.getenv("GITHUB_USERNAME", "ErBishalBudhathoki")
 CACHE_TTL_SECONDS = 3600
 GITHUB_CONTRIBUTION_COLORS = {
     0: "#ebedf0",
@@ -396,7 +396,7 @@ def _set_cached_activity(username: str, payload: Dict[str, Any]) -> None:
 
 
 async def get_github_activity(username: Optional[str] = None) -> Dict[str, Any]:
-    resolved_username = (username or "").strip() or GITHUB_USERNAME or "BishalBudhathoki"
+    resolved_username = (username or "").strip() or GITHUB_USERNAME or "ErBishalBudhathoki"
     cached = _get_cached_activity(resolved_username)
     if cached:
         return cached
