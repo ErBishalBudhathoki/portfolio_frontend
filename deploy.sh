@@ -39,7 +39,7 @@ echo "🔄 Updating Cloud Run service..."
   --allow-unauthenticated \
   --memory 2Gi \
   --cpu 1 \
-  --min-instances 1 \
+  --min-instances 0 \
   --max-instances 10 \
   --set-env-vars NEXT_PUBLIC_API_URL="$BACKEND_URL",NEXT_PUBLIC_GITHUB_URL="${NEXT_PUBLIC_GITHUB_URL:-https://github.com/ErBishalBudhathoki}"
 

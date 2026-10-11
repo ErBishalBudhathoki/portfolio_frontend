@@ -69,7 +69,7 @@ echo "Deploying to Cloud Run..."
   --cpu=1 \
   --memory=1Gi \
   --timeout=300 \
-  --min-instances=1 \
+  --min-instances=0 \
   --max-instances=2 \
   --set-env-vars="$ENV_VARS" \
   --set-secrets="GOOGLE_SHEETS_CREDENTIALS=GOOGLE_SHEETS_CREDENTIALS:latest,LINKEDIN_PASSWORD=LINKEDIN_PASSWORD:latest" \
