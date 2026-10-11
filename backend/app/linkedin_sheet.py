@@ -13,6 +13,11 @@ from .google_sheet import setup_sheets_service
 PROFILE_CACHE_TTL_SECONDS = int(os.getenv("PROFILE_CACHE_TTL_SECONDS", "300"))
 _profile_cache: Dict[str, Any] = {"fetched_at": None, "payload": None}
 
+# Verifying that the worksheets exist costs a spreadsheet metadata round trip;
+# it only needs to happen once in a while per process.
+SHEETS_ENSURE_TTL_SECONDS = 3600
+_sheets_ensured_at: Optional[datetime] = None
+
 # Define worksheet names for different data types
 SHEET_BASIC_INFO = "BasicInfo"
 SHEET_EXPERIENCE = "Experience"
@@ -499,16 +504,28 @@ async def get_linkedin_data_from_sheet() -> Optional[Dict[str, Any]]:
         # Get CV URL from dedicated sheet (own service + round trip, start it early)
         cv_url_task = asyncio.create_task(get_cv_url_from_sheet())
 
-        # Fetch every worksheet in parallel. Reading them sequentially costs
-        # one Google Sheets round trip per worksheet, which dominates the
-        # response time of /api/profile.
+        # Fetch every worksheet in parallel. Each read gets its own Sheets
+        # service because the discovery client's HTTP transport is not
+        # thread-safe: sharing one service across threads makes concurrent
+        # reads time out. Building a service is local work (no network), so
+        # this is still much faster than sequential round trips.
+        sheet_targets = [
+            (SHEET_BASIC_INFO, "A1:B10"),
+            (SHEET_EXPERIENCE, "A1:Z50"),
+            (SHEET_EDUCATION, "A1:Z20"),
+            (SHEET_SKILLS, "A1:Z50"),
+            (SHEET_PROJECTS, "A1:Z20"),
+            (SHEET_CERTIFICATIONS, "A1:Z20"),
+        ]
+
+        async def _read_worksheet(sheet_name: str, range_str: str):
+            read_service = await setup_sheets_service()
+            if not read_service:
+                raise RuntimeError(f"Could not set up Sheets service for {sheet_name}")
+            return await asyncio.to_thread(get_sheet_data, read_service, sheet_name, range_str)
+
         basic_info_data, experience_data, education_data, skills_data, projects_data, certifications_data = await asyncio.gather(
-            asyncio.to_thread(get_sheet_data, service, SHEET_BASIC_INFO, "A1:B10"),
-            asyncio.to_thread(get_sheet_data, service, SHEET_EXPERIENCE, "A1:Z50"),
-            asyncio.to_thread(get_sheet_data, service, SHEET_EDUCATION, "A1:Z20"),
-            asyncio.to_thread(get_sheet_data, service, SHEET_SKILLS, "A1:Z50"),
-            asyncio.to_thread(get_sheet_data, service, SHEET_PROJECTS, "A1:Z20"),
-            asyncio.to_thread(get_sheet_data, service, SHEET_CERTIFICATIONS, "A1:Z20"),
+            *[_read_worksheet(sheet_name, range_str) for sheet_name, range_str in sheet_targets]
         )
 
         cv_url = await cv_url_task
@@ -800,6 +817,24 @@ async def get_linkedin_data_from_sheet() -> Optional[Dict[str, Any]]:
         return None
 
 async def ensure_linkedin_sheet_exists():
+    """Ensure that all LinkedIn-related sheets exist.
+
+    The metadata round trip is skipped for an hour after a successful check
+    (per process); sheet creation is rare and a redeploy re-checks anyway.
+    """
+    global _sheets_ensured_at
+    if _sheets_ensured_at is not None:
+        age = (datetime.now() - _sheets_ensured_at).total_seconds()
+        if age < SHEETS_ENSURE_TTL_SECONDS:
+            return {"success": True, "message": "LinkedIn sheets recently verified"}
+
+    result = await _ensure_linkedin_sheet_exists_uncached()
+    if result.get("success"):
+        _sheets_ensured_at = datetime.now()
+    return result
+
+
+async def _ensure_linkedin_sheet_exists_uncached():
     """Ensure that all LinkedIn-related sheets exist"""
     try:
         # Set up the Google Sheets service
