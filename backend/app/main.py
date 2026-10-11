@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import json
 from datetime import datetime
 from .linkedin_scraper import scrape_linkedin_profile
+from .config import SHEET_ID
 from .google_sheet import get_blog_posts_from_sheet, ensure_blog_sheet_exists, get_detailed_blog_posts_from_sheet, ensure_manual_blog_sheet_exists, setup_sheets_service, SHEET_ID, SHEET_NAME
 from .contact_form import ContactFormSubmission, save_contact_submission, ensure_contact_sheet_exists
 from .github_activity import get_github_activity
@@ -20,6 +21,12 @@ import subprocess
 
 # Load environment variables
 load_dotenv()
+
+if not SHEET_ID:
+    raise RuntimeError(
+        "SHEET_ID is not set. Add the Google Sheet ID to backend/.env "
+        "(the id from the spreadsheet URL) before starting the backend."
+    )
 
 # Create database tables
 Base.metadata.create_all(bind=engine)

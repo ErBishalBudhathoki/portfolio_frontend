@@ -4,10 +4,9 @@ from pydantic import BaseModel, EmailStr
 
 # Import the Google Sheets setup function from the existing module
 from .google_sheet import setup_sheets_service
+# Spreadsheet ID comes from the SHEET_ID environment variable (backend/.env)
+from .config import SHEET_ID
 
-# Google Sheet ID for contact form submissions
-# You can create a new sheet or use the existing one with a new tab
-SHEET_ID = "1blqFnWjYgB1idiYqqEZR5qfueO0k6vPZv4eP8Yn3xTg"  # Same as blog posts
 SHEET_NAME = "contact_submissions"  # New tab name for contact form data
 
 class ContactFormSubmission(BaseModel):

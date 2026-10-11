@@ -1,10 +1,17 @@
+import asyncio
+import copy
 import os
 import re
+from datetime import datetime
 from typing import Dict, Any, List, Optional
+from .config import SHEET_ID
 from .google_sheet import setup_sheets_service
 
-# Google Sheet ID (from the URL)
-SHEET_ID = os.getenv("SHEET_ID", "1blqFnWjYgB1idiYqqEZR5qfueO0k6vPZv4eP8Yn3xTg")
+# Assembling the profile costs one Google Sheets round trip per worksheet,
+# so the result is cached in-process for a few minutes. Edits made in the
+# sheet show up after this window (or a redeploy).
+PROFILE_CACHE_TTL_SECONDS = int(os.getenv("PROFILE_CACHE_TTL_SECONDS", "300"))
+_profile_cache: Dict[str, Any] = {"fetched_at": None, "payload": None}
 
 # Define worksheet names for different data types
 SHEET_BASIC_INFO = "BasicInfo"
@@ -452,10 +459,30 @@ def get_sheet_data(service, sheet_name: str, range_str: str = "A1:Z1000") -> Lis
         print(f"Error fetching data from {sheet_name}: {e}")
         return []
 
+def _get_cached_profile() -> Optional[Dict[str, Any]]:
+    """Return a fresh copy of the cached profile payload, or None when stale."""
+    if _profile_cache["payload"] is None or _profile_cache["fetched_at"] is None:
+        return None
+    age = (datetime.now() - _profile_cache["fetched_at"]).total_seconds()
+    if age > PROFILE_CACHE_TTL_SECONDS:
+        return None
+    return copy.deepcopy(_profile_cache["payload"])
+
+
+def _set_cached_profile(payload: Dict[str, Any]) -> None:
+    _profile_cache["fetched_at"] = datetime.now()
+    _profile_cache["payload"] = copy.deepcopy(payload)
+
+
 async def get_linkedin_data_from_sheet() -> Optional[Dict[str, Any]]:
     """
     Retrieve LinkedIn profile data from Google Sheets with improved structure
     """
+    cached = _get_cached_profile()
+    if cached is not None:
+        print("Using cached profile data from Google Sheets")
+        return cached
+
     try:
         # Set up the Google Sheets service
         service = await setup_sheets_service()
@@ -469,24 +496,30 @@ async def get_linkedin_data_from_sheet() -> Optional[Dict[str, Any]]:
             print("Could not find or create LinkedIn sheet")
             return None
         
-        # Get CV URL from dedicated sheet
-        cv_url = await get_cv_url_from_sheet()
+        # Get CV URL from dedicated sheet (own service + round trip, start it early)
+        cv_url_task = asyncio.create_task(get_cv_url_from_sheet())
+
+        # Fetch every worksheet in parallel. Reading them sequentially costs
+        # one Google Sheets round trip per worksheet, which dominates the
+        # response time of /api/profile.
+        basic_info_data, experience_data, education_data, skills_data, projects_data, certifications_data = await asyncio.gather(
+            asyncio.to_thread(get_sheet_data, service, SHEET_BASIC_INFO, "A1:B10"),
+            asyncio.to_thread(get_sheet_data, service, SHEET_EXPERIENCE, "A1:Z50"),
+            asyncio.to_thread(get_sheet_data, service, SHEET_EDUCATION, "A1:Z20"),
+            asyncio.to_thread(get_sheet_data, service, SHEET_SKILLS, "A1:Z50"),
+            asyncio.to_thread(get_sheet_data, service, SHEET_PROJECTS, "A1:Z20"),
+            asyncio.to_thread(get_sheet_data, service, SHEET_CERTIFICATIONS, "A1:Z20"),
+        )
+
+        cv_url = await cv_url_task
         print(f"CV URL from get_cv_url_from_sheet: {cv_url}")
-            
+
         # Get data from each sheet with detailed debugging for BasicInfo
         print("\n===== DETAILED DEBUG FOR BASIC INFO SHEET =====")
-        basic_info_data = get_sheet_data(service, SHEET_BASIC_INFO, "A1:B10")
         print(f"Basic info raw data rows:")
         # Print each row with row number for debugging
         for i, row in enumerate(basic_info_data):
             print(f"Row {i}: {row}")
-        
-        # Continue with other data fetching
-        experience_data = get_sheet_data(service, SHEET_EXPERIENCE, "A1:Z50")
-        education_data = get_sheet_data(service, SHEET_EDUCATION, "A1:Z20")
-        skills_data = get_sheet_data(service, SHEET_SKILLS, "A1:Z50")
-        projects_data = get_sheet_data(service, SHEET_PROJECTS, "A1:Z20")
-        certifications_data = get_sheet_data(service, SHEET_CERTIFICATIONS, "A1:Z20")
         
         # Process each section of data
         profile_data = {}
@@ -756,7 +789,8 @@ async def get_linkedin_data_from_sheet() -> Optional[Dict[str, Any]]:
             
             profile_data['certifications'] = certifications_list
             print(f"Processed {len(certifications_list)} certifications")
-        
+
+        _set_cached_profile(profile_data)
         return profile_data
     
     except Exception as e:

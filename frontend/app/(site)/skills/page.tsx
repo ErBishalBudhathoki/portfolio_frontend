@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 type Skill = {
   name?: string;
@@ -466,7 +466,7 @@ async function getProfileData(): Promise<ProfileData | null> {
       process.env.NEXT_PUBLIC_API_URL || "https://portfolio-backend-824962762241.us-central1.run.app";
 
     const response = await fetch(`${apiUrl}/api/profile`, {
-      cache: "no-store",
+      next: { revalidate: 60 },
     });
 
     if (!response.ok) {
@@ -486,7 +486,7 @@ async function getGitHubActivity(): Promise<GitHubActivity | null> {
       process.env.NEXT_PUBLIC_API_URL || "https://portfolio-backend-824962762241.us-central1.run.app";
 
     const response = await fetch(`${apiUrl}/api/github/activity`, {
-      cache: "no-store",
+      next: { revalidate: 60 },
     });
 
     if (!response.ok) {

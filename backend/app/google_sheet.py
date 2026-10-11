@@ -9,8 +9,9 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Google Sheet ID (from the URL)
-SHEET_ID = "1blqFnWjYgB1idiYqqEZR5qfueO0k6vPZv4eP8Yn3xTg"
+# The spreadsheet ID comes from the SHEET_ID environment variable (backend/.env).
+from .config import SHEET_ID
+
 SHEET_NAME = "blog_posts"
 
 # Cache file path
