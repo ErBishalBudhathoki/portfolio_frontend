@@ -267,71 +267,13 @@ async def setup_blog_sheet():
                 "posts": blog_posts
             }
         
-        # If no posts, let's add the sample fallback posts from the process_sheet_data function
-        # This is a temporary solution to ensure we have some blog posts
-        if result:
-            # Add sample data
-            sample_data = [
-                [
-                    "Building a Modern Portfolio Website with Next.js",
-                    "Learn how to create a dynamic portfolio website using Next.js, React, and Tailwind CSS. This tutorial covers responsive design, dark mode, and data fetching.",
-                    "2023-10-15",
-                    "https://i.imgur.com/9QHjOtc.jpg",
-                    "https://medium.com/@bishalbudhathoki/building-a-modern-portfolio",
-                    "Bishal Budhathoki",
-                    "8 min read"
-                ],
-                [
-                    "How to Use Google Sheets as a Simple CMS",
-                    "Explore how to integrate Google Sheets as a content management system for your website. A budget-friendly solution for small to medium websites.",
-                    "2023-09-22",
-                    "https://i.imgur.com/N7RswTK.jpg",
-                    "https://medium.com/@bishalbudhathoki/google-sheets-as-cms",
-                    "Bishal Budhathoki",
-                    "6 min read"
-                ],
-                [
-                    "Automation with Python: Scraping LinkedIn Profiles",
-                    "Learn how to automate web scraping to collect data from LinkedIn profiles using Python, Selenium, and BeautifulSoup.",
-                    "2023-08-30",
-                    "https://i.imgur.com/0CbM4aC.jpg",
-                    "https://medium.com/@bishalbudhathoki/linkedin-scraping-with-python",
-                    "Bishal Budhathoki",
-                    "10 min read"
-                ]
-            ]
-            
-            try:
-                service = setup_sheets_service()
-                if service:
-                    service.spreadsheets().values().update(
-                        spreadsheetId=SHEET_ID,
-                        range=f"{SHEET_NAME}!A2:G4",
-                        valueInputOption="RAW",
-                        body={
-                            "values": sample_data
-                        }
-                    ).execute()
-                    
-                    print("Added sample blog posts to sheet")
-                    
-                    # Get the updated posts
-                    blog_posts = await get_blog_posts_from_sheet()
-                    
-                    return {
-                        "success": True,
-                        "message": "Sample blog posts have been added to the sheet",
-                        "posts": blog_posts
-                    }
-            except Exception as e:
-                return {
-                    "success": False,
-                    "message": f"Failed to add sample posts: {str(e)}"
-                }
-        
+        # The sheet exists but has no posts.
+        # Previously this seeded placeholder posts pointing at Medium URLs that
+        # do not exist, so the live blog index advertised dead articles. Real
+        # posts are now added by hand to the sheet.
         return {
-            "success": result,
-            "message": "Blog sheet has been set up but could not add sample posts",
+            "success": bool(result),
+            "message": "Blog sheet is ready. Add rows to publish posts.",
             "posts": []
         }
     except Exception as e:

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Briefcase, GraduationCap, Calendar, MapPin } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ServerWarmingScreen } from "@/components/ServerWarmingScreen";
 import { useApi } from "@/hooks/useApi";
 
 // Define types for profile data
@@ -79,7 +80,7 @@ const ImageWithFallback = ({
 
 export default function AboutPage() {
   // Use our cached API hook to fetch profile data with caching
-  const { data: profileData, error, isLoading } = useApi<ProfileData>('/profile', {
+  const { data: profileData, error, isLoading, isWarming } = useApi<ProfileData>('/profile', {
     // Cache profile data for 5 minutes (300000ms)
     dedupingInterval: 300000,
   });
@@ -97,25 +98,14 @@ export default function AboutPage() {
   // Use the name from basic_info or fallback to a default
   const displayName = basic_info?.name || "Bishal Budhathoki";
 
-  if (isLoading) {
+  if (isWarming && !profileData && !FALLBACK_DATA) {
+    return <ServerWarmingScreen title="Waking Up Server & Loading Profile" />;
+  }
+
+  if (isLoading && !data) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center">
         <LoadingSpinner size="large" showText />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center p-4">
-        <h2 className="text-2xl font-bold mb-4 text-foreground">Something went wrong</h2>
-        <p className="text-muted-foreground mb-6">{error.message || "Failed to load profile data. Please try again later."}</p>
-        <button 
-          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
-          onClick={() => window.location.reload()}
-        >
-          Try Again
-        </button>
       </div>
     );
   }

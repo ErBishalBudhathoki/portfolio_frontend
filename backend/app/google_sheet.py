@@ -1,4 +1,6 @@
+import asyncio
 import os
+import threading
 import json
 from datetime import datetime
 from google.oauth2 import service_account
@@ -17,6 +19,30 @@ SHEET_NAME = "blog_posts"
 # Cache file path
 BLOG_CACHE_PATH = os.path.join(os.path.dirname(__file__), "../data/blog_cache.json")
 os.makedirs(os.path.dirname(BLOG_CACHE_PATH), exist_ok=True)
+
+
+def slugify(title: str) -> str:
+    """Canonical blog slug.
+
+    Kept in sync with frontend/lib/slug.ts. Emitting the slug from the API means
+    the list page and the detail page can no longer disagree about how a title
+    maps to a URL (they previously differed on hyphens, which 404'd posts such
+    as "The Homelab Saga: Taming Pi-hole ...").
+    """
+    import re
+    import unicodedata
+
+    if not title:
+        return "post"
+
+    text = unicodedata.normalize("NFKD", str(title))
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    text = text.lower()
+    # keep letters, numbers, spaces and hyphens
+    text = re.sub(r"[^\w\s-]", "", text, flags=re.UNICODE)
+    text = re.sub(r"\s+", "-", text.strip())
+    text = re.sub(r"-{2,}", "-", text)
+    return text.strip("-") or "post"
 
 async def get_blog_posts_from_sheet() -> List[Dict[str, Any]]:
     """
@@ -47,7 +73,9 @@ async def get_blog_posts_from_sheet() -> List[Dict[str, Any]]:
         
         # Get sheet data
         sheet_data = fetch_sheet_data(service, SHEET_ID, SHEET_NAME)
-        print(f"Raw sheet data: {sheet_data if sheet_data else 'No data'}")
+        # Row counts only. This used to print the whole payload, which dumped the
+        # multi-KB Homelab summary four times for every single blog request.
+        print(f"Raw sheet data: {len(sheet_data)} row(s)")
         
         if not sheet_data:
             print("No sheet data found, checking cache")
@@ -61,7 +89,7 @@ async def get_blog_posts_from_sheet() -> List[Dict[str, Any]]:
         
         # Process sheet data into blog posts
         blog_posts = process_sheet_data(sheet_data)
-        print(f"Processed blog posts: {blog_posts}")
+        print(f"Processed blog posts: {len(blog_posts)} post(s)")
         
         # Cache the data
         cache_data = {
@@ -83,80 +111,108 @@ async def get_blog_posts_from_sheet() -> List[Dict[str, Any]]:
         # If all else fails, return an empty list
         return []
 
-async def setup_sheets_service():
-    """Set up the Google Sheets API service asynchronously"""
-    try:
-        scopes = ['https://www.googleapis.com/auth/spreadsheets']
-        credentials_secret = os.getenv('GOOGLE_SHEETS_CREDENTIALS')
-        credentials_path = os.getenv('GOOGLE_CREDENTIALS_PATH')
+# The Sheets API client is expensive to build: googleapiclient parses the full
+# discovery document (its static cache is disabled on this version), which
+# allocates tens of MB per call. Building it once per request leaked memory and
+# got this container OOM-killed every minute or two, surfacing across the site as
+# 503s and "Unable to load profile data". Build once, then reuse.
+_sheets_service = None
+_sheets_service_lock = asyncio.Lock()
+# googleapiclient's Http transport is NOT thread-safe: sharing one cached
+# client across concurrent reads makes calls interleave and time out. Every
+# sheet read acquires this so worksheet reads serialize instead of colliding.
+_sheets_io_lock = threading.Lock()
 
-        # Secret Manager on Cloud Run injects the secret value directly into the env var.
-        # Support both raw JSON credentials and filesystem paths for local/dev setups.
-        if credentials_secret:
-            try:
-                if credentials_secret.lstrip().startswith('{'):
-                    credentials_info = json.loads(credentials_secret)
-                    credentials = service_account.Credentials.from_service_account_info(
-                        credentials_info,
-                        scopes=scopes
-                    )
-                    service = build('sheets', 'v4', credentials=credentials)
-                    print("Successfully created Sheets service from secret env JSON")
-                    return service
-            except Exception as secret_error:
-                print(f"Error loading Google Sheets credentials from env JSON: {secret_error}")
 
-        candidate_paths = []
-        if credentials_path:
-            if os.path.isabs(credentials_path):
-                candidate_paths.append(credentials_path)
-            else:
-                candidate_paths.append(os.path.normpath(os.path.join(os.path.dirname(__file__), "..", credentials_path)))
+def _build_sheets_service():
+    """Create the Sheets API client once. Returns None if no credentials are usable."""
+    scopes = ['https://www.googleapis.com/auth/spreadsheets']
+    credentials_secret = os.getenv('GOOGLE_SHEETS_CREDENTIALS')
+    credentials_path = os.getenv('GOOGLE_CREDENTIALS_PATH')
 
-        if credentials_secret and not credentials_secret.lstrip().startswith('{'):
-            if os.path.isabs(credentials_secret):
-                candidate_paths.append(credentials_secret)
-            else:
-                candidate_paths.append(os.path.normpath(os.path.join(os.path.dirname(__file__), "..", credentials_secret)))
+    # Secret Manager on Cloud Run injects the secret value directly into the env var.
+    # Support both raw JSON credentials and filesystem paths for local/dev setups.
+    if credentials_secret:
+        try:
+            if credentials_secret.lstrip().startswith('{'):
+                credentials_info = json.loads(credentials_secret)
+                credentials = service_account.Credentials.from_service_account_info(
+                    credentials_info,
+                    scopes=scopes
+                )
+                return build('sheets', 'v4', credentials=credentials)
+        except Exception as secret_error:
+            print(f"Error loading Google Sheets credentials from env JSON: {secret_error}")
 
-        candidate_paths.append(os.path.join(os.path.dirname(__file__), "../credentials/google_credentials.json"))
-
-        for candidate_path in candidate_paths:
-            if not candidate_path:
-                continue
-            if os.path.exists(candidate_path):
-                print(f"Using service account credentials from file: {candidate_path}")
-                try:
-                    credentials = service_account.Credentials.from_service_account_file(
-                        candidate_path,
-                        scopes=scopes
-                    )
-                    service = build('sheets', 'v4', credentials=credentials)
-                    print("Successfully created Sheets service with service account file")
-                    return service
-                except Exception as cred_error:
-                    print(f"Error loading service account credentials file: {cred_error}")
-
-        print("Service account credentials file not found in configured locations")
-
-        # If no service account, try to use API key
-        api_key = os.getenv('GOOGLE_API_KEY')
-        if api_key:
-            print("Using API key from environment variables")
-            try:
-                service = build('sheets', 'v4', developerKey=api_key)
-                print("Successfully created Sheets service with API key")
-                return service
-            except Exception as api_error:
-                print(f"Error creating service with API key: {api_error}")
+    candidate_paths = []
+    if credentials_path:
+        if os.path.isabs(credentials_path):
+            candidate_paths.append(credentials_path)
         else:
-            print("No Google credentials or API key found")
+            candidate_paths.append(os.path.normpath(os.path.join(os.path.dirname(__file__), "..", credentials_path)))
+
+    if credentials_secret and not credentials_secret.lstrip().startswith('{'):
+        if os.path.isabs(credentials_secret):
+            candidate_paths.append(credentials_secret)
+        else:
+            candidate_paths.append(os.path.normpath(os.path.join(os.path.dirname(__file__), "..", credentials_secret)))
+
+    candidate_paths.append(os.path.join(os.path.dirname(__file__), "../credentials/google_credentials.json"))
+
+    for candidate_path in candidate_paths:
+        if not candidate_path:
+            continue
+        if os.path.exists(candidate_path):
+            try:
+                credentials = service_account.Credentials.from_service_account_file(
+                    candidate_path,
+                    scopes=scopes
+                )
+                return build('sheets', 'v4', credentials=credentials)
+            except Exception as cred_error:
+                print(f"Error loading service account credentials file: {cred_error}")
+
+    print("Service account credentials file not found in configured locations")
+
+    # If no service account, try to use API key
+    api_key = os.getenv('GOOGLE_API_KEY')
+    if api_key:
+        try:
+            return build('sheets', 'v4', developerKey=api_key)
+        except Exception as api_error:
+            print(f"Error creating service with API key: {api_error}")
+    else:
+        print("No Google credentials or API key found")
+
+    return None
+
+
+async def setup_sheets_service():
+    """Set up the Google Sheets API service asynchronously (cached, built at most once)."""
+    global _sheets_service
+    if _sheets_service is not None:
+        return _sheets_service
+
+    async with _sheets_service_lock:
+        # A concurrent request may have built it while we waited on the lock.
+        if _sheets_service is not None:
+            return _sheets_service
+
+        try:
+            service = await asyncio.to_thread(_build_sheets_service)
+        except Exception as e:
+            print(f"Error setting up Google Sheets service: {e}")
+            import traceback
+            traceback.print_exc()
             return None
-    except Exception as e:
-        print(f"Error setting up Google Sheets service: {e}")
-        import traceback
-        traceback.print_exc()
-        return None
+
+        if service is not None:
+            # Only cache a working client. A failed build (credentials briefly
+            # unavailable) must stay retryable instead of poisoning all later calls.
+            _sheets_service = service
+            print("Sheets API client cached for reuse across requests")
+        return service
+
 
 def fetch_sheet_data(service, sheet_id, sheet_name):
     """Fetch data from the Google Sheet"""
@@ -165,11 +221,12 @@ def fetch_sheet_data(service, sheet_id, sheet_name):
         # Get the sheet range
         sheet_range = f"{sheet_name}!A:Z"  # Adjust range as needed
         
-        # Make the API call
-        result = service.spreadsheets().values().get(
-            spreadsheetId=sheet_id,
-            range=sheet_range
-        ).execute()
+        # Make the API call (serialized for thread-safe transport access)
+        with _sheets_io_lock:
+            result = service.spreadsheets().values().get(
+                spreadsheetId=sheet_id,
+                range=sheet_range
+            ).execute()
         
         values = result.get('values', [])
         print(f"Fetched {len(values)} rows from {sheet_name} (including header row)")
@@ -189,37 +246,11 @@ def process_sheet_data(sheet_data):
     try:
         # Check if sheet data is empty or has less than 2 rows (header + at least one post)
         if not sheet_data or len(sheet_data) < 2:
-            print(f"Sheet is empty or contains only headers (rows: {len(sheet_data) if sheet_data else 0}), returning fallback data")
-            # Return fallback data
-            return [
-                {
-                    "title": "Building a Modern Portfolio Website with Next.js",
-                    "summary": "Learn how to create a dynamic portfolio website using Next.js, React, and Tailwind CSS. This tutorial covers responsive design, dark mode, and data fetching.",
-                    "publication_date": "2023-10-15",
-                    "thumbnail_url": "https://i.imgur.com/9QHjOtc.jpg",
-                    "url": "https://medium.com/@bishalbudhathoki/building-a-modern-portfolio",
-                    "author": "Bishal Budhathoki",
-                    "reading_time": "8 min read"
-                },
-                {
-                    "title": "How to Use Google Sheets as a Simple CMS",
-                    "summary": "Explore how to integrate Google Sheets as a content management system for your website. A budget-friendly solution for small to medium websites.",
-                    "publication_date": "2023-09-22",
-                    "thumbnail_url": "https://i.imgur.com/N7RswTK.jpg",
-                    "url": "https://medium.com/@bishalbudhathoki/google-sheets-as-cms",
-                    "author": "Bishal Budhathoki",
-                    "reading_time": "6 min read"
-                },
-                {
-                    "title": "Automation with Python: Scraping LinkedIn Profiles",
-                    "summary": "Learn how to automate web scraping to collect data from LinkedIn profiles using Python, Selenium, and BeautifulSoup.",
-                    "publication_date": "2023-08-30",
-                    "thumbnail_url": "https://i.imgur.com/0CbM4aC.jpg",
-                    "url": "https://medium.com/@bishalbudhathoki/linkedin-scraping-with-python",
-                    "author": "Bishal Budhathoki",
-                    "reading_time": "10 min read"
-                }
-            ]
+            # Previously this returned three placeholder posts whose Medium URLs
+            # did not exist, so the live blog index advertised dead articles.
+            # An empty sheet now means "no posts published yet".
+            print(f"Sheet is empty or contains only headers (rows: {len(sheet_data) if sheet_data else 0}), returning no posts")
+            return []
         
         # The first row should be headers
         headers = sheet_data[0]
@@ -259,7 +290,7 @@ def process_sheet_data(sheet_data):
                 field_name = header_mapping.get(header, header.lower().replace(' ', '_'))
                 post[field_name] = padded_row[i]
             
-            print(f"Processed post data: {post}")
+            print(f"Processed post data: {post.get('title', '(untitled)')}")
             
             # Ensure required fields have values
             if 'title' in post and post['title']:
@@ -275,9 +306,12 @@ def process_sheet_data(sheet_data):
                 
                 if 'url' not in post or not post['url']:
                     post['url'] = ""
-                
+
+                # Emit the canonical slug so the frontend never has to guess.
+                post['slug'] = slugify(post['title'])
+
                 blog_posts.append(post)
-                print(f"Added post: {post['title']}")
+                print(f"Added post: {post['title']} (slug: {post['slug']})")
             else:
                 print(f"Skipping row due to missing title")
         
@@ -293,6 +327,17 @@ def process_sheet_data(sheet_data):
             pass
         
         print(f"Returning {len(blog_posts)} processed blog posts")
+
+        # The sheet is edited by hand, so a renamed/typo'd header cell used to
+        # silently skip every row and serve an empty blog. Make it loud.
+        if not blog_posts and len(sheet_data) > 1:
+            found = [h for h in sheet_data[0] if h]
+            print(
+                "[BLOG WARNING] blog_posts returned 0 posts even though the sheet has "
+                f"{len(sheet_data) - 1} data row(s). Headers found: {found}. "
+                "The first header must be 'Title'."
+            )
+
         return blog_posts
     except Exception as e:
         print(f"Error processing sheet data: {e}")
@@ -342,38 +387,12 @@ async def ensure_blog_sheet_exists():
                     }
                 ).execute()
                 
-                # Add sample data if sheet is empty
-                sample_data = [
-                    [
-                        "Building a Modern Portfolio Website with Next.js",
-                        "Learn how to create a dynamic portfolio website using Next.js, React, and Tailwind CSS. This tutorial covers responsive design, dark mode, and data fetching.",
-                        "2023-10-15",
-                        "https://i.imgur.com/9QHjOtc.jpg",
-                        "https://medium.com/@bishalbudhathoki/building-a-modern-portfolio",
-                        "Bishal Budhathoki",
-                        "8 min read"
-                    ],
-                    [
-                        "How to Use Google Sheets as a Simple CMS",
-                        "Explore how to integrate Google Sheets as a content management system for your website. A budget-friendly solution for small to medium websites.",
-                        "2023-09-22",
-                        "https://i.imgur.com/N7RswTK.jpg",
-                        "https://medium.com/@bishalbudhathoki/google-sheets-as-cms",
-                        "Bishal Budhathoki",
-                        "6 min read"
-                    ]
-                ]
-                
-                service.spreadsheets().values().update(
-                    spreadsheetId=SHEET_ID,
-                    range=f"{SHEET_NAME}!A2:G3",
-                    valueInputOption="RAW",
-                    body={
-                        "values": sample_data
-                    }
-                ).execute()
-                
-                print(f"Created new sheet '{SHEET_NAME}' for blog posts with sample data")
+                # NOTE: sample rows are intentionally NOT seeded here.
+                # They used to insert placeholder posts pointing at
+                # medium.com/@bishalbudhathoki/... URLs that do not exist, and
+                # those fake posts were then published on the live blog index.
+                # An empty sheet now stays empty until real posts are added.
+                print(f"Created new sheet '{SHEET_NAME}' for blog posts (headers only)")
                 return True
             
             # Check if the headers exist
@@ -468,19 +487,23 @@ def process_detailed_blog_data(sheet_data):
             for i in range(1, 6):  # We support up to 5 content/image pairs
                 content_key = f'content_{i}'
                 image_key = f'image_{i}'
-                
-                # If both content and image are empty, we've reached the end of content
-                if not post.get(content_key) and not post.get(image_key):
-                    break
-                    
-                # Add the section if either content or image exists
-                section = {
+
+                content_value = post.get(content_key, '')
+                image_value = post.get(image_key, '')
+
+                # Skip an empty pair but keep scanning: a gap in the middle of a
+                # post (e.g. no Content_5) must not discard the sections after it.
+                if not content_value and not image_value:
+                    post.pop(content_key, None)
+                    post.pop(image_key, None)
+                    continue
+
+                content_sections.append({
                     'type': 'section',
-                    'content': post.get(content_key, ''),
-                    'image': post.get(image_key, '')
-                }
-                content_sections.append(section)
-                
+                    'content': content_value,
+                    'image': image_value,
+                })
+
                 # Remove these keys from the main post object to avoid duplication
                 post.pop(content_key, None)
                 post.pop(image_key, None)
@@ -502,7 +525,10 @@ def process_detailed_blog_data(sheet_data):
                     post['summary'] = summary
                 else:
                     post['summary'] = "No summary available."
-            
+
+            # Emit the canonical slug so the frontend never has to guess.
+            post['slug'] = slugify(post.get('title', ''))
+
             blog_posts.append(post)
         
         # Sort by publication date (newest first)
@@ -513,7 +539,18 @@ def process_detailed_blog_data(sheet_data):
             )
         except Exception as e:
             print(f"Error sorting blog posts by date: {e}")
-            
+
+        # The sheet is edited by hand, so a renamed/typo'd header cell (e.g. A1
+        # becoming "man") used to silently skip every row and serve an empty blog.
+        # Make that failure loud so it is visible in Cloud Run logs immediately.
+        if not blog_posts and len(sheet_data) > 1:
+            found = [h for h in sheet_data[0] if h]
+            print(
+                "[BLOG WARNING] manual_blog_posts returned 0 posts even though the "
+                f"sheet has {len(sheet_data) - 1} data row(s). Headers found: {found}. "
+                "The first header must be 'Title'."
+            )
+
         return blog_posts
         
     except Exception as e:
@@ -571,37 +608,10 @@ async def ensure_manual_blog_sheet_exists():
                     }
                 ).execute()
                 
-                # Add a sample blog post with multiple content sections
-                sample_post = [
-                    "Building a Dynamic Blog with Google Sheets",
-                    "Learn how to create a modern blog system using Google Sheets as a CMS with rich content including text and images.",
-                    "2023-11-10",
-                    "https://i.imgur.com/abcdef.jpg",
-                    "In this tutorial, we'll walk through creating a dynamic blog that pulls content from Google Sheets. This approach offers several advantages for portfolio websites and small blogs.",
-                    "https://i.imgur.com/section1.jpg",
-                    "## Setting Up Your Google Sheet\n\nFirst, we need to create a Google Sheet with the right structure to hold our blog posts. Each row will represent a single blog post with multiple content sections.",
-                    "https://i.imgur.com/section2.jpg",
-                    "## Connecting to the API\n\nNext, we'll use the Google Sheets API to fetch our blog data. This requires setting up authentication with a service account.",
-                    "https://i.imgur.com/section3.jpg",
-                    "## Displaying Rich Content\n\nWith our data structure in place, we can now render beautiful blog posts with alternating text and images.",
-                    "https://i.imgur.com/section4.jpg",
-                    "## Conclusion\n\nThis approach gives you a flexible, easy-to-update blog system without the complexity of a traditional CMS.",
-                    "",
-                    "Bishal Budhathoki",
-                    "10 min read",
-                    "https://medium.com/@bishalbudhathoki/google-sheets-blog"
-                ]
-                
-                service.spreadsheets().values().update(
-                    spreadsheetId=SHEET_ID,
-                    range="manual_blog_posts!A2:Q2",
-                    valueInputOption="RAW",
-                    body={
-                        "values": [sample_post]
-                    }
-                ).execute()
-                
-                print("Created new sheet 'manual_blog_posts' with sample data")
+                # Headers only. A sample post used to be written here, which put
+                # a placeholder article (with fake imgur image URLs) into the live
+                # blog on every fresh sheet. Rows are now authored in the sheet.
+                print("Created new sheet 'manual_blog_posts' with headers")
                 return True
             
             # Check if the headers exist

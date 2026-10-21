@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import "./animations.css"; // Import animation styles from CSS file
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ServerWarmingScreen } from "@/components/ServerWarmingScreen";
 import { ProfileData, Experience } from './types';
 import { MessageCircle } from 'lucide-react';
 
@@ -30,42 +31,58 @@ function convertToDriveDirectLink(url: string | null): string | null {
 }
 
 // Add static page config
-export const revalidate = 300; // Revalidate every 5 minutes
+export const dynamic = "force-dynamic"; // Always evaluate fresh data
+export const revalidate = 0;
 
-// Fetch data server-side
+/**
+ * Fetch profile data server-side with cold-start tolerance.
+ * The backend runs on Cloud Run with --min-instances=0, meaning an idle container
+ * needs 15-30s to boot. Progressive retries ensure routine cold starts succeed
+ * cleanly during SSR before falling back to the client-side warming screen.
+ */
 async function getProfileData(): Promise<ProfileData | null> {
-  try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://portfolio-backend-824962762241.us-central1.run.app';
-    const response = await fetch(`${apiUrl}/api/profile`, {
-      next: { revalidate: 300 }, // 5 minutes
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch profile data');
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://portfolio-backend-824962762241.us-central1.run.app';
+  const attempts = 4;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const timeoutMs = 6000 + attempt * 2000; // 8s, 10s, 12s, 14s
+      const response = await fetch(`${apiUrl}/api/profile`, {
+        next: { revalidate: 0 },
+        cache: "no-store",
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Profile API responded with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data && (data.basic_info || data.experience || data.projects)) {
+        return data;
+      }
+      throw new Error('Profile response was empty');
+    } catch (error) {
+      const isLast = attempt === attempts;
+      if (isLast) {
+        console.warn(`[Cold Start] Backend still booting after ${attempts} attempts:`, error instanceof Error ? error.message : error);
+        return null;
+      }
+
+      const delayMs = 1500 * attempt;
+      console.log(`[Cold Start] Waking up container (attempt ${attempt}/${attempts}). Retrying in ${delayMs}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching profile data:', error);
-    return null;
   }
+
+  return null;
 }
 
 export default async function Home() {
   const profileData = await getProfileData();
   
   if (!profileData) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 text-center">
-        <h2 className="text-2xl font-bold mb-4">Unable to load profile data</h2>
-        <p className="text-muted-foreground mb-8">
-          There was a problem loading the profile information. Please try again later.
-        </p>
-        <Button asChild>
-          <Link href="/">Refresh Page</Link>
-        </Button>
-      </div>
-    );
+    return <ServerWarmingScreen />;
   }
   
   const { basic_info, experience, skills, cv_url, projects } = profileData;

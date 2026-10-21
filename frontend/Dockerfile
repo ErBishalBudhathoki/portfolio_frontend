@@ -12,6 +12,13 @@ RUN npm install
 # Copy the rest of the application
 COPY . .
 
+# NEXT_PUBLIC_* values are inlined at build time, so they must be present in
+# the BUILD stage, not just the runtime stage.
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_GITHUB_URL=https://github.com/ErBishalBudhathoki
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_GITHUB_URL=${NEXT_PUBLIC_GITHUB_URL}
+
 # Build the Next.js application with standalone output
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
@@ -27,9 +34,8 @@ RUN apk --no-cache add curl
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV NEXT_TELEMETRY_DISABLED=1
-# Use ARG for build-time configuration
-ARG NEXT_PUBLIC_API_URL
-# Set default value only if not provided during build
+# NEXT_PUBLIC_API_URL is consumed at build time above; keep it here too so the
+# standalone server has it at runtime.
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 # Create a non-root user

@@ -17,32 +17,23 @@ const defaultOptions: ApiOptions = {
   revalidateIfStale: false,
 };
 
-// Default fetcher that handles API responses and errors
+// Default fetcher that handles API responses, cold-starts, and errors
 const defaultFetcher = async (url: string) => {
   const timestamp = new Date().getTime();
   const fullUrl = url.includes('?') ? `${url}&t=${timestamp}` : `${url}?t=${timestamp}`;
   
-  console.log('Fetching:', fullUrl);
-  
   const response = await fetch(fullUrl);
   
   if (!response.ok) {
-    const error = new Error('An error occurred while fetching the data.');
-    error.message = `Error ${response.status}: ${response.statusText}`;
+    const error: any = new Error(`Error ${response.status}: ${response.statusText}`);
+    error.status = response.status;
+    if (response.status === 502 || response.status === 503 || response.status === 504) {
+      error.isWarming = true;
+    }
     throw error;
   }
   
   const responseData = await response.json();
-  
-  // Debug logging to help with contact email issue
-  if (url.includes('/profile')) {
-    console.log('useApi hook - Profile data response:', responseData);
-    if (responseData.basic_info) {
-      console.log('useApi hook - Profile basic_info:', responseData.basic_info);
-      console.log('useApi hook - Contact email:', responseData.basic_info.contact_email);
-    }
-  }
-  
   return responseData;
 };
 
@@ -68,13 +59,27 @@ export function useApi<T>(path: string, options?: ApiOptions) {
       revalidateOnMount: swrOptions.revalidateOnMount,
       refreshInterval: swrOptions.refreshInterval,
       dedupingInterval: swrOptions.dedupingInterval,
+      shouldRetryOnError: true,
+      errorRetryInterval: 3000,
+      errorRetryCount: 15, // Patiently retry during ~45s cold starts
     }
+  );
+
+  const isWarming = Boolean(
+    error && (
+      (error as any).isWarming || 
+      (error as any).status === 503 || 
+      (error as any).status === 502 ||
+      (error as any).message?.includes('503') ||
+      (error as any).message?.includes('502')
+    )
   );
 
   return {
     data,
     error,
-    isLoading,
+    isLoading: isLoading || (isWarming && !data),
+    isWarming,
     isValidating,
     refresh: mutate
   };

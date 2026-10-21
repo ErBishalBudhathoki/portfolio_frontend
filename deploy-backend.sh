@@ -67,10 +67,10 @@ echo "Deploying to Cloud Run..."
   --region $REGION \
   --allow-unauthenticated \
   --cpu=1 \
-  --memory=1Gi \
+  --memory=2Gi \
   --timeout=300 \
-  --min-instances=0 \
-  --max-instances=2 \
+  --min-instances=1 \
+  --max-instances=10 \
   --set-env-vars="$ENV_VARS" \
   --set-secrets="GOOGLE_SHEETS_CREDENTIALS=GOOGLE_SHEETS_CREDENTIALS:latest,LINKEDIN_PASSWORD=LINKEDIN_PASSWORD:latest" \
   --command="/app/startup.sh" \

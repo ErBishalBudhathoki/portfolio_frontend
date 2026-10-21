@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink, Code2, Github } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ServerWarmingScreen } from "@/components/ServerWarmingScreen";
+import { FALLBACK_PROFILE_DATA } from "@/lib/fallback-data";
 import { useApi } from "@/hooks/useApi";
 
 interface Project {
@@ -299,23 +301,28 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 }
 
 export default function ProjectsPage() {
-  const { data: profileData, error, isLoading } = useApi<ProfileData>('/profile', {
+  const { data: profileData, error, isLoading, isWarming } = useApi<ProfileData>('/profile', {
     dedupingInterval: 300000, // 5 minutes cache
   });
   
-  const isError = !!error;
-  
-  // Process projects to enhance them with structured technologies
+  // Process projects to enhance them with structured technologies, using fallback if needed
   const projects = React.useMemo(() => {
-    if (!profileData?.projects || profileData.projects.length === 0) {
+    const rawProjects = (profileData?.projects && profileData.projects.length > 0)
+      ? profileData.projects
+      : (error ? (FALLBACK_PROFILE_DATA.projects as any[]) : []);
+    
+    if (!rawProjects || rawProjects.length === 0) {
       return [];
     }
     
-    return profileData.projects.map(enhanceProjectData);
-  }, [profileData?.projects]);
+    return rawProjects.map(enhanceProjectData);
+  }, [profileData?.projects, error]);
+
+  if (isWarming && (!projects || projects.length === 0)) {
+    return <ServerWarmingScreen title="Waking Up Server & Loading Projects" />;
+  }
 
   return (
-    
     <div className="container mx-auto px-4 py-12 md:py-16">
       <div className="flex flex-col items-center mb-12">
         <div className="inline-flex items-center justify-center p-1 px-3 mb-4 border border-accent-foreground/30 rounded-full bg-accent-foreground/5 text-accent-foreground text-sm font-medium">
@@ -332,16 +339,9 @@ export default function ProjectsPage() {
         </p>
       </div>
 
-      {isLoading ? (
+      {isLoading && projects.length === 0 ? (
         <div className="flex justify-center items-center min-h-[400px]">
           <LoadingSpinner size="large" showText />
-        </div>
-      ) : isError ? (
-        <div className="text-center p-8 border border-destructive/20 rounded-lg bg-destructive/5">
-          <h3 className="text-xl font-medium mb-2">Error Loading Projects</h3>
-          <p className="text-muted-foreground">
-            There was a problem loading the projects. Please try again later.
-          </p>
         </div>
       ) : projects.length === 0 ? (
         <div className="text-center p-8 border border-border rounded-lg">

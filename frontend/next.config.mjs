@@ -23,6 +23,7 @@ const nextConfig = {
       { hostname: 'drive.google.com' },
       { hostname: 'firebasestorage.googleapis.com' },
       { hostname: 'ui-avatars.com' },
+        { hostname: 'miro.medium.com' },
     ],
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,

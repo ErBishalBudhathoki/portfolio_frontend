@@ -7,6 +7,7 @@ import { useParams } from 'next/navigation';
 import { Calendar, Clock, ChevronLeft, User, AlertCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import Loading from '../../loading';
+import { createSlug, findBySlug } from '@/lib/slug';
 
 // Define types for blog data
 interface BlogPost {
@@ -34,14 +35,8 @@ interface BlogPost {
 }
 
 // Helper function to create slugs
-function createSlug(title: string): string {
-  if (!title) return `post`;
-  return title
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .trim();
-}
+// createSlug and findBySlug come from @/lib/slug so that this page and the
+// list page can never disagree about how a title maps to a slug.
 
 // Format date function
 function formatDate(dateString?: string): string {
@@ -78,12 +73,16 @@ export default function BlogPostPage() {
       setIsLoading(true);
       setError(null);
       
-      // Try the regular posts endpoint first
-      let foundPost = await findPostInEndpoint(`/api/blog`, slug);
-      
+      // Try the regular posts endpoint first.
+      // Trailing slashes are required: next.config.mjs sets `trailingSlash: true`,
+      // so an unslashed path answers with a 308 redirect. A raw fetch() follows
+      // that redirect inconsistently and intermittently yields no body, which
+      // made every post look like "Article Not Found".
+      let foundPost = await findPostInEndpoint(`/api/blog/`, slug);
+
       // If not found, try detailed posts endpoint
       if (!foundPost) {
-        foundPost = await findPostInEndpoint(`/api/blog/detailed`, slug);
+        foundPost = await findPostInEndpoint(`/api/blog/detailed/`, slug);
       }
       
       if (foundPost) {
@@ -104,9 +103,11 @@ export default function BlogPostPage() {
     try {
       const origin = window.location.origin;
       const url = `${origin}${endpoint}`;
-      
-      const response = await fetch(url);
-      
+
+      // `redirect: "error"` turns any unexpected redirect into a loud failure
+      // instead of a silently empty body that reads as "post not found".
+      const response = await fetch(url, { redirect: "error" });
+
       if (!response.ok) {
         throw new Error(`Failed to fetch from ${endpoint}: ${response.status}`);
       }
@@ -122,9 +123,11 @@ export default function BlogPostPage() {
         ...p,
         slug: p.slug || createSlug(p.title),
       }));
-      
-      // Find the post that matches the slug
-      return processedPosts.find((p: BlogPost) => p.slug === targetSlug) || null;
+
+      // Find the post that matches the slug. findBySlug also accepts slugs
+      // produced by older builds (e.g. "pi-hole" vs "pihole") so existing
+      // links keep working instead of 404-ing.
+      return findBySlug(processedPosts, targetSlug) || null;
     } catch (error) {
       console.error(`Error in findPostInEndpoint (${endpoint}):`, error);
       return null;

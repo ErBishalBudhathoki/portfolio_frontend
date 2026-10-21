@@ -8,6 +8,8 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ArrowRight } from 'lucide-react';
 import Loading from '../loading';
 import { useApi } from '@/hooks/useApi';
+import { ServerWarmingScreen } from '@/components/ServerWarmingScreen';
+import { createSlug as sharedCreateSlug } from '@/lib/slug';
 
 // Define blog data types
 export interface BlogPost {
@@ -37,10 +39,7 @@ interface ApiResponse {
 
 // Helper function to create a slug from a title
 function createSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^\w\s]/g, '')
-    .replace(/\s+/g, '-');
+  return sharedCreateSlug(title);
 }
 
 // Add formatDate function locally
@@ -130,21 +129,10 @@ export default function BlogPage() {
 
   if (error || allPosts.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="text-center mb-8">
-          <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-500" />
-          <h2 className="text-2xl font-bold mb-2">Sorry, we couldn't load the blog posts</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            {error ? error.message : "No blog posts were found. Please try again later."}
-          </p>
-          <button
-            onClick={handleRetry}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
+      <ServerWarmingScreen 
+        title="Waking Up Articles Engine"
+        subtitle="The blog sync pipeline was resting to save cloud energy. Spinning up Google Sheets connection and fetching posts right now!"
+      />
     );
   }
 
@@ -211,11 +199,11 @@ export default function BlogPage() {
                       </div>
                     )}
                   </div>
-                  <Link 
+                  <Link
                     href={`/blog/${featuredPost.slug || createSlug(featuredPost.title)}`}
                     className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-md"
                   >
-                    Read Full Article <ChevronRight className="ml-2 h-4 w-4" />
+                    Read Post <ChevronRight className="ml-2 h-4 w-4" />
                   </Link>
                 </div>
               </div>

@@ -15,8 +15,11 @@ import {
   Workflow,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { FALLBACK_PROFILE_DATA } from "@/lib/fallback-data";
 
-export const revalidate = 60;
+// Matches the home page. A tighter window means more chances to render while
+// the scale-to-zero backend is cold starting.
+export const revalidate = 300;
 
 type Skill = {
   name?: string;
@@ -460,61 +463,82 @@ function formatContributionLabel(day: GitHubActivityDay) {
   return `${formattedDate}: ${day.count} ${noun}`;
 }
 
-async function getProfileData(): Promise<ProfileData | null> {
-  try {
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || "https://portfolio-backend-824962762241.us-central1.run.app";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://portfolio-backend-824962762241.us-central1.run.app";
 
-    const response = await fetch(`${apiUrl}/api/profile`, {
-      next: { revalidate: 60 },
-    });
+const PROFILE_REVALIDATE_SECONDS = 300;
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch skills profile");
+/**
+ * The backend runs with --min-instances=0, so a cold start can take ~10s.
+ * Retry a few times before giving up, otherwise the page renders an error
+ * instead of data during a routine scale-up.
+ */
+async function fetchWithRetry(
+  url: string,
+  label: string,
+  attempts = 4,
+  timeoutMs = 9000,
+): Promise<unknown | null> {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const perAttemptTimeout = timeoutMs + (attempt - 1) * 2000;
+      const response = await fetch(url, {
+        next: { revalidate: PROFILE_REVALIDATE_SECONDS },
+        signal: AbortSignal.timeout(perAttemptTimeout),
+      });
+
+      if (!response.ok) {
+        throw new Error(`${label} responded ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      const lastAttempt = attempt === attempts;
+      if (lastAttempt) {
+        console.warn(`[Cold Start] Giving up on ${label} after ${attempts} attempts:`, error instanceof Error ? error.message : error);
+        return null;
+      }
+      console.log(
+        `[Cold Start] Retrying ${label} (attempt ${attempt}/${attempts}):`,
+        error instanceof Error ? error.message : error,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 1500 * attempt));
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching skills profile:", error);
-    return null;
   }
+
+  return null;
+}
+
+async function getProfileData(): Promise<ProfileData | null> {
+  return (await fetchWithRetry(
+    `${API_URL}/api/profile`,
+    "skills profile",
+  )) as ProfileData | null;
 }
 
 async function getGitHubActivity(): Promise<GitHubActivity | null> {
-  try {
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || "https://portfolio-backend-824962762241.us-central1.run.app";
-
-    const response = await fetch(`${apiUrl}/api/github/activity`, {
-      next: { revalidate: 60 },
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch GitHub activity");
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching GitHub activity:", error);
-    return null;
-  }
+  return (await fetchWithRetry(
+    `${API_URL}/api/github/activity`,
+    "GitHub activity",
+    3,
+    5000,
+  )) as GitHubActivity | null;
 }
 
 export default async function SkillsPage() {
-  const [profileData, githubActivity] = await Promise.all([getProfileData(), getGitHubActivity()]);
+  // allSettled: GitHub activity is supplementary, so its failure must never
+  // take the skills list down with it.
+  const [profileResult, githubResult] = await Promise.allSettled([
+    getProfileData(),
+    getGitHubActivity(),
+  ]);
 
-  if (!profileData) {
-    return (
-      <div className="flex min-h-[80vh] items-center justify-center px-4 text-center">
-        <div className="w-full max-w-3xl rounded-[2rem] border border-border/70 bg-card/95 p-8 shadow-[0_20px_60px_rgba(20,24,62,0.08)]">
-          <h1 className="text-2xl font-semibold text-foreground">Unable to load skills</h1>
-          <p className="mt-3 text-muted-foreground">
-            The skills page could not retrieve profile data. Refresh once and try again.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const profileData =
+    profileResult.status === "fulfilled" && profileResult.value 
+      ? profileResult.value 
+      : (FALLBACK_PROFILE_DATA as unknown as ProfileData);
+  const githubActivity =
+    githubResult.status === "fulfilled" ? githubResult.value : null;
 
   const normalizedSkills = normalizeSkills(profileData.skills);
   const skillGroups = groupSkills(normalizedSkills);

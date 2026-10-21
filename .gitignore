@@ -198,8 +198,13 @@ Desktop.ini
 local-docker-deploy.sh.bak
 minimal-package.json
 
-# Certificate files
 *.cert
 *.key
 *.crt
-*.pem 
+*.pem
+
+# PWA and build caches
+node-compile-cache/
+node-jiti/
+**/.next.stale-*
+[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]*/

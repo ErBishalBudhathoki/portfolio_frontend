@@ -5,7 +5,7 @@ import re
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from .config import SHEET_ID
-from .google_sheet import setup_sheets_service
+from .google_sheet import setup_sheets_service, _sheets_io_lock
 
 # Assembling the profile costs one Google Sheets round trip per worksheet,
 # so the result is cached in-process for a few minutes. Edits made in the
@@ -452,10 +452,14 @@ def save_certifications_data(service, certifications: List[Dict[str, str]]):
 def get_sheet_data(service, sheet_name: str, range_str: str = "A1:Z1000") -> List[List[str]]:
     """Get data from a specific sheet"""
     try:
-        result = service.spreadsheets().values().get(
-            spreadsheetId=SHEET_ID,
-            range=f"{sheet_name}!{range_str}"
-        ).execute()
+        # Serialize access to the shared (cached) Sheets client transport; it
+        # is not thread-safe across the concurrent Worksheet reads in
+        # get_linkedin_data_from_sheet().
+        with _sheets_io_lock:
+            result = service.spreadsheets().values().get(
+                spreadsheetId=SHEET_ID,
+                range=f"{sheet_name}!{range_str}"
+            ).execute()
         
         values = result.get('values', [])
         print(f"Fetched {len(values)} rows from {sheet_name}")

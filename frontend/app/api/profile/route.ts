@@ -14,54 +14,69 @@ interface ExperienceItem {
 }
 
 export async function GET() {
-  try {
-    console.log('API route /api/profile was called');
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://portfolio-backend-824962762241.us-central1.run.app';
+  const fullUrl = `${backendUrl}/api/profile`;
+  const maxAttempts = 3;
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://portfolio-backend-ixvhxw7sqq-uc.a.run.app';
-    const fullUrl = `${backendUrl}/api/profile`;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      console.log(`API route /api/profile calling ${fullUrl} (attempt ${attempt}/${maxAttempts})`);
 
-    console.log(`API route is forwarding to: ${fullUrl}`);
+      const response = await fetch(fullUrl, {
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(8000),
+      });
 
-    const response = await fetch(fullUrl, {
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      console.error(`Backend API request failed: ${response.status} ${response.statusText}`);
-      throw new Error(`Failed to fetch data from backend: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log('API route successfully fetched data');
-
-    if (process.env.NEXT_PUBLIC_API_DEBUG === 'true') {
-      console.log(`API data preview: ${JSON.stringify(data).substring(0, 200)}...`);
-    }
-
-    if (data.experience && Array.isArray(data.experience)) {
-      data.experience = data.experience.map((exp: ExperienceItem) => ({
-        ...exp,
-        title: exp.title || exp.role,
-      }));
-    }
-
-    data.last_updated = data.last_updated || new Date().toISOString();
-
-    console.log(`Successfully processed profile data with ${data.experience?.length || 0} experiences`);
-
-    return NextResponse.json(data, {
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      if (!response.ok) {
+        // Cold starts on Cloud Run typically present as 502, 503, or 504
+        if ((response.status === 502 || response.status === 503 || response.status === 504) && attempt < maxAttempts) {
+          console.warn(`[Cold Start] Backend returned ${response.status}. Retrying in 2s...`);
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          continue;
+        }
+        throw new Error(`Backend API request failed: ${response.status} ${response.statusText}`);
       }
-    });
-  } catch (error) {
-    console.error('Error in /api/profile route:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+
+      const data = await response.json();
+
+      if (data.experience && Array.isArray(data.experience)) {
+        data.experience = data.experience.map((exp: ExperienceItem) => ({
+          ...exp,
+          title: exp.title || exp.role,
+        }));
+      }
+
+      data.last_updated = data.last_updated || new Date().toISOString();
+
+      return NextResponse.json(data, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        }
+      });
+    } catch (error) {
+      if (attempt < maxAttempts) {
+        console.warn(`[Cold Start] Connection failed on attempt ${attempt}. Retrying in 2s...`, error instanceof Error ? error.message : error);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        continue;
+      }
+
+      console.error('Error in /api/profile route after retries:', error);
+      return NextResponse.json(
+        { 
+          status: 'warming',
+          error: 'Server is currently waking up from cold sleep',
+          retryAfter: 3
+        },
+        { status: 503 }
+      );
+    }
   }
+
+  return NextResponse.json(
+    { status: 'warming', error: 'Server warming up', retryAfter: 3 },
+    { status: 503 }
+  );
 } 

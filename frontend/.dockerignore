@@ -1,1 +1,18 @@
 app/firebase-test*
+
+# Never ship local-only env into the image.
+# .env.local points at http://localhost:8000 and Next.js reads it with higher
+# precedence than .env, so it would silently override the real backend URL at
+# build time. .env itself is kept: it holds the production API URL that the
+# build inlines.
+.env.local
+.env.development
+.env.test
+.env.*.local
+
+node_modules
+.next
+.next.stale-*
+out
+*.log
+.DS_Store

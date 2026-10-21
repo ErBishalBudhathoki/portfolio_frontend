@@ -1,0 +1,22 @@
+# Cloud Build only needs the frontend sources; everything here is ignored by git
+# and was previously uploaded as a ~550MB tarball on every deploy.
+.git
+**/node_modules
+**/.next
+**/.next.stale-*
+**/out
+**/.turbo
+**/.cache
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+**/node-compile-cache
+**/node-jiti
+**/.venv
+**/venv
+**/.DS_Store
+*.log
+**/credentials
+**/*.env
+**/.env
