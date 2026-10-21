@@ -53,7 +53,7 @@ if ! "$GCLOUD_BIN" builds submit --config cloudbuild.yaml \
   exit 1
 fi
 
-BUILD_ID="$(grep -oE '^ID: [0-9a-f-]{36}' "$BUILD_LOG" | head -1 | awk '{print $2}')"
+BUILD_ID="$(grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' "$BUILD_LOG" | head -1 || true)"
 echo "✅ Build succeeded${BUILD_ID:+ (build $BUILD_ID)}"
 
 # Only now, with a confirmed image in the registry, update the service.
