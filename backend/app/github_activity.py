@@ -198,7 +198,7 @@ async def _fetch_uncredited_repo_commits(
             for r in repos
             if isinstance(r, dict)
             and r.get("full_name")
-            and (r.get("pushed_at") or "").startswith(target_year)
+            and (r.get("pushed_at") or "") >= target_year
         ]
 
         async def fetch_commits_for_repo(full_name: str) -> List[Dict[str, Any]]:
