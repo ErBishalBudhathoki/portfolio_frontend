@@ -60,6 +60,18 @@ def _level_from_graphql(value: Optional[str]) -> int:
     return levels.get((value or "").upper(), 0)
 
 
+def _level_for_count(count: int) -> int:
+    if count <= 0:
+        return 0
+    if count <= 2:
+        return 1
+    if count <= 5:
+        return 2
+    if count <= 9:
+        return 3
+    return 4
+
+
 def _get_year_ranges(today: Optional[date] = None) -> List[Dict[str, Any]]:
     current = today or date.today()
     years = [current.year - 1, current.year]
@@ -146,6 +158,103 @@ def _build_week_grid(
     }
 
 
+async def _fetch_uncredited_repo_commits(
+    client: httpx.AsyncClient,
+    username: str,
+    token: str,
+    start_dt: datetime,
+    end_dt: datetime,
+) -> Dict[str, int]:
+    """
+    Fetch uncredited commits authored by the user across recent repositories
+    (e.g., commits made under alternate unlinked emails or on non-default branches).
+    """
+    try:
+        response = await client.get(
+            f"{GITHUB_REST_API_URL}/user/repos",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github+json",
+            },
+            params={
+                "affiliation": "owner,collaborator",
+                "sort": "pushed",
+                "direction": "desc",
+                "per_page": 20,
+            },
+        )
+        if response.status_code != 200:
+            return {}
+        repos = response.json()
+        if not isinstance(repos, list):
+            return {}
+
+        start_str = start_dt.strftime("%Y-%m-%d")
+        end_str = end_dt.strftime("%Y-%m-%d")
+        target_year = str(start_dt.year)
+
+        target_repos = [
+            r["full_name"]
+            for r in repos
+            if isinstance(r, dict)
+            and r.get("full_name")
+            and (r.get("pushed_at") or "").startswith(target_year)
+        ]
+
+        async def fetch_commits_for_repo(full_name: str) -> List[Dict[str, Any]]:
+            try:
+                c_resp = await client.get(
+                    f"{GITHUB_REST_API_URL}/repos/{full_name}/commits",
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "Accept": "application/vnd.github+json",
+                    },
+                    params={
+                        "since": _utc_isoformat(start_dt),
+                        "until": _utc_isoformat(end_dt),
+                        "per_page": 100,
+                    },
+                )
+                if c_resp.status_code == 200:
+                    data = c_resp.json()
+                    return data if isinstance(data, list) else []
+            except Exception:
+                pass
+            return []
+
+        results = await asyncio.gather(
+            *(fetch_commits_for_repo(repo_name) for repo_name in target_repos),
+            return_exceptions=True,
+        )
+
+        uncredited_by_date: Dict[str, int] = {}
+        for res in results:
+            if isinstance(res, list):
+                for commit in res:
+                    author = commit.get("commit", {}).get("author", {})
+                    email = (author.get("email") or "").lower()
+                    name = (author.get("name") or "").lower()
+                    gh_login = ((commit.get("author") or {}).get("login") or "").lower()
+
+                    is_user = (
+                        "bishal" in name
+                        or "bishal" in email
+                        or gh_login == username.lower()
+                    )
+                    # Commits under unlinked emails were ignored by GitHub GraphQL
+                    is_unlinked = "bishalkc331" in email or ("bishal" in name and "deverbishal" not in email)
+
+                    if is_user and is_unlinked:
+                        d = (author.get("date") or "")[:10]
+                        if d and start_str <= d <= end_str:
+                            uncredited_by_date[d] = uncredited_by_date.get(d, 0) + 1
+
+        return uncredited_by_date
+    except Exception as exc:
+        print(f"Warning: Failed to fetch uncredited repo commits: {exc}")
+        return {}
+
+
 async def _fetch_graphql_year(
     client: httpx.AsyncClient,
     username: str,
@@ -185,15 +294,40 @@ async def _fetch_graphql_year(
     if not calendar:
         raise ValueError("GitHub contribution calendar was empty")
 
+    uncredited_commits = await _fetch_uncredited_repo_commits(
+        client=client,
+        username=username,
+        token=token,
+        start_dt=start,
+        end_dt=end,
+    )
+
     day_entries: List[Dict[str, Any]] = []
+    total_augmented = int(calendar.get("totalContributions", 0))
+
     for week in calendar.get("weeks", []):
         for contribution_day in week.get("contributionDays", []):
+            d_str = contribution_day["date"]
+            count = int(contribution_day.get("contributionCount", 0))
+            extra = uncredited_commits.get(d_str, 0)
+            final_count = count + extra
+            total_augmented += extra
+
+            if final_count > 0 and contribution_day.get("contributionLevel") in (None, "NONE", ""):
+                level = _level_for_count(final_count)
+                color = GITHUB_CONTRIBUTION_COLORS.get(level)
+            else:
+                level = _level_from_graphql(contribution_day.get("contributionLevel"))
+                if extra > 0 and level < _level_for_count(final_count):
+                    level = _level_for_count(final_count)
+                color = GITHUB_CONTRIBUTION_COLORS.get(level) if extra > 0 else contribution_day.get("color")
+
             day_entries.append(
                 {
-                    "date": contribution_day["date"],
-                    "count": int(contribution_day.get("contributionCount", 0)),
-                    "level": _level_from_graphql(contribution_day.get("contributionLevel")),
-                    "color": contribution_day.get("color"),
+                    "date": d_str,
+                    "count": final_count,
+                    "level": level,
+                    "color": color,
                 }
             )
 
@@ -202,7 +336,7 @@ async def _fetch_graphql_year(
         start=year_range["start"],
         end=year_range["end"],
         day_entries=day_entries,
-        total_contributions=int(calendar.get("totalContributions", 0)),
+        total_contributions=total_augmented,
     )
 
 
