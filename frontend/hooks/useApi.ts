@@ -11,10 +11,10 @@ interface ApiOptions {
 
 const defaultOptions: ApiOptions = {
   refreshInterval: 0, // Default to no auto-refresh
-  revalidateOnFocus: false, // Don't revalidate when window gets focus
+  revalidateOnFocus: true, // Revalidate when window gets focus
   revalidateOnReconnect: true, // Revalidate when reconnecting after being offline
-  dedupingInterval: 60000, // 1 minute deduping interval
-  revalidateIfStale: false,
+  dedupingInterval: 5000, // 5 seconds deduping interval
+  revalidateIfStale: true, // Always revalidate if data is stale
 };
 
 // Default fetcher that handles API responses, cold-starts, and errors

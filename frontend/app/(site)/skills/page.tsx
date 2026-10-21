@@ -17,9 +17,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { FALLBACK_PROFILE_DATA } from "@/lib/fallback-data";
 
-// Matches the home page. A tighter window means more chances to render while
-// the scale-to-zero backend is cold starting.
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type Skill = {
   name?: string;
@@ -483,7 +482,8 @@ async function fetchWithRetry(
     try {
       const perAttemptTimeout = timeoutMs + (attempt - 1) * 2000;
       const response = await fetch(url, {
-        next: { revalidate: PROFILE_REVALIDATE_SECONDS },
+        cache: "no-store",
+        next: { revalidate: 0 },
         signal: AbortSignal.timeout(perAttemptTimeout),
       });
 

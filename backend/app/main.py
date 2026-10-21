@@ -583,6 +583,13 @@ async def startup_event():
         except Exception as telegram_error:
             print(f"⚠️ Error starting Telegram bot: {str(telegram_error)}")
             
+        # Pre-warm profile data from Google Sheets in background so first user request is instant
+        try:
+            print("Pre-warming profile cache from Google Sheets...")
+            asyncio.create_task(get_linkedin_data_from_sheet())
+        except Exception as prewarm_error:
+            print(f"⚠️ Pre-warm task error: {str(prewarm_error)}")
+
         print("=========================================")
         print("Portfolio Backend API startup complete")
         print("=========================================")

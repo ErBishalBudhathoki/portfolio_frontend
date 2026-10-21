@@ -1,15 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Coffee, Sparkles, Cpu } from 'lucide-react';
+import { Sparkles, Cpu } from 'lucide-react';
 
 const MESSAGES = [
-  { minSeconds: 0, text: 'Loading Bishal\'s portfolio...', subtext: 'Fetching latest highlights' },
-  { minSeconds: 3, text: 'Cloud container was taking a quick power nap 😴', subtext: 'Waking up the server runtime...' },
-  { minSeconds: 8, text: 'Brewing fresh bytes & warming the engine ☕', subtext: 'Spinning up on-demand cloud instance...' },
-  { minSeconds: 15, text: 'Shaking hands with live Google Sheets 🤝', subtext: 'Syncing latest projects and verified skills...' },
-  { minSeconds: 24, text: 'Assembling experience timeline & pixel magic ✨', subtext: 'Almost ready to showcase...' },
-  { minSeconds: 35, text: 'Giving the container a gentle pep talk 🚀', subtext: 'Thanks for your patience — quality code is worth the wait!' },
+  { minSeconds: 0, text: 'Loading Bishal\'s portfolio...', subtext: 'Connecting to services' },
+  { minSeconds: 3, text: 'Initializing cloud microservices ⚡', subtext: 'Starting server runtime on Google Cloud...' },
+  { minSeconds: 8, text: 'Synchronizing live data pipeline 🔄', subtext: 'Connecting to Google Sheets data source...' },
+  { minSeconds: 16, text: 'Loading verified skills and projects 🚀', subtext: 'Formatting experience timeline and repositories...' },
+  { minSeconds: 25, text: 'Assembling interactive components ✨', subtext: 'Almost ready to render...' },
+  { minSeconds: 35, text: 'Finalizing server connection 🛰️', subtext: 'Preparing your view right now...' },
 ];
 
 export default function Loading() {
@@ -54,18 +54,18 @@ export default function Loading() {
           </div>
         </div>
 
-        {/* Cold start indicator badge */}
+        {/* Status indicator badge */}
         {seconds >= 3 && (
           <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-3 rounded-full border border-accent-foreground/30 bg-accent-foreground/5 text-accent-foreground text-xs font-medium animate-fadeIn">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-foreground opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-foreground"></span>
             </span>
-            <span>Cloud Instance Spinning Up • {seconds}s</span>
+            <span>Cloud Services Initializing • {seconds}s</span>
           </div>
         )}
         
-        {/* Dynamic quirky message */}
+        {/* Dynamic message */}
         <div className="relative mb-2 min-h-[30px] flex items-center justify-center">
           <div className="text-base sm:text-lg font-semibold text-foreground transition-all duration-300">
             {currentMessage.text}
@@ -84,12 +84,6 @@ export default function Loading() {
             style={{ width: `${progressPercent}%` }}
           ></div>
         </div>
-
-        {seconds >= 10 && (
-          <p className="text-[11px] text-muted-foreground/75 italic animate-fadeIn">
-            💡 Free-tier containers take a few seconds to warm up from cold sleep.
-          </p>
-        )}
       </div>
     </div>
   );

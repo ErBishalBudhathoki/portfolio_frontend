@@ -83,11 +83,7 @@ const ImageWithFallback = ({
 };
 
 export default function AboutPage() {
-  // Use our cached API hook to fetch profile data with caching
-  const { data: profileData, error, isLoading, isWarming } = useApi<ProfileData>('/profile', {
-    // Cache profile data for 5 minutes (300000ms)
-    dedupingInterval: 300000,
-  });
+  const { data: profileData, error, isLoading, isWarming } = useApi<ProfileData>('/profile');
 
   // Use the profile data or fallback if not available
   const data = profileData || FALLBACK_DATA;

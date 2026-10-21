@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
-  Coffee, 
   Server, 
   Sparkles, 
   RefreshCw, 
@@ -12,7 +11,6 @@ import {
   ArrowRight, 
   CheckCircle2, 
   Clock, 
-  CloudRain, 
   Cpu, 
   HelpCircle 
 } from 'lucide-react';
@@ -29,13 +27,12 @@ interface ServerWarmingScreenProps {
 
 export function ServerWarmingScreen({
   onUseFallback,
-  title = "Waking Up The Cloud Engine",
-  subtitle = "Our cloud server takes a power nap when idle to save green energy. We've sent the alarm clock — it's stretching its legs and booting up right now!"
+  title = "Connecting to Cloud Backend",
+  subtitle = "Connecting to backend cloud services. Initializing the live data pipeline to load projects, verified skills, and experience highlights."
 }: ServerWarmingScreenProps) {
   const router = useRouter();
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isChecking, setIsChecking] = useState(false);
-  const [caffeineBoosts, setCaffeineBoosts] = useState(0);
   const [isServerReady, setIsServerReady] = useState(false);
   const [currentFactIndex, setCurrentFactIndex] = useState(0);
 
@@ -111,12 +108,6 @@ export function ServerWarmingScreen({
     return () => clearInterval(factTimer);
   }, []);
 
-  const handleSendCoffee = () => {
-    setCaffeineBoosts(prev => prev + 1);
-    // Trigger immediate check when sending coffee
-    checkBackendStatus();
-  };
-
   const handleInstantView = () => {
     if (onUseFallback) {
       onUseFallback(FALLBACK_PROFILE_DATA);
@@ -124,15 +115,6 @@ export function ServerWarmingScreen({
       router.refresh();
     }
   };
-
-  // Caffeine multiplier text
-  const caffeineMessage = useMemo(() => {
-    if (caffeineBoosts === 0) return null;
-    if (caffeineBoosts === 1) return "☕ 1 Espresso delivered to server!";
-    if (caffeineBoosts === 2) return "☕☕ Double shot! Microservices accelerating...";
-    if (caffeineBoosts < 5) return `☕ × ${caffeineBoosts} Pouring Colombian dark roast! Container overclocked!`;
-    return `☕ × ${caffeineBoosts} Warning: Server is reaching warp speed! 🚀`;
-  }, [caffeineBoosts]);
 
   return (
     <div className="relative min-h-[85vh] flex items-center justify-center px-4 py-12 overflow-hidden">
@@ -180,7 +162,7 @@ export function ServerWarmingScreen({
               {isServerReady ? (
                 <CheckCircle2 className="w-8 h-8 text-emerald-500 animate-bounce" />
               ) : (
-                <Coffee className="w-8 h-8 text-accent-foreground animate-pulse" />
+                <Sparkles className="w-8 h-8 text-accent-foreground animate-pulse" />
               )}
             </div>
           </div>
@@ -223,37 +205,20 @@ export function ServerWarmingScreen({
             </p>
           </div>
 
-          {/* Interactive Coffee Booster */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
+          {/* Actions */}
+          <div className="flex items-center justify-center gap-3 mb-6">
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={handleSendCoffee}
-              className="rounded-full border-accent-foreground/50 text-accent-foreground hover:bg-accent-foreground/10 transition-all text-xs sm:text-sm"
-            >
-              <Coffee className="w-4 h-4 mr-1.5" />
-              Send Coffee to Server ☕
-            </Button>
-
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
               onClick={checkBackendStatus}
               disabled={isChecking}
-              className="rounded-full text-muted-foreground hover:text-foreground text-xs sm:text-sm"
+              className="rounded-full border-accent-foreground/40 text-accent-foreground hover:bg-accent-foreground/10 text-xs sm:text-sm"
             >
               <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isChecking ? 'animate-spin' : ''}`} />
               {isChecking ? 'Checking status...' : 'Check Status Now'}
             </Button>
           </div>
-
-          {caffeineMessage && (
-            <p className="text-xs text-primary font-medium animate-fadeIn mb-4">
-              {caffeineMessage}
-            </p>
-          )}
 
           {/* Rotating Fun Tech Fact */}
           <div className="py-3 px-4 rounded-xl bg-card border border-border/40 text-xs text-muted-foreground/90 italic mb-6 min-h-[44px] flex items-center justify-center transition-all">

@@ -3,7 +3,19 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ExternalLink, Code2, Github } from "lucide-react";
+import { 
+  ExternalLink, 
+  Code2, 
+  Github, 
+  FileText, 
+  Home, 
+  Gamepad2, 
+  Calendar, 
+  Globe, 
+  Layout, 
+  HeartHandshake, 
+  Laptop 
+} from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ServerWarmingScreen } from "@/components/ServerWarmingScreen";
 import { FALLBACK_PROFILE_DATA } from "@/lib/fallback-data";
@@ -189,29 +201,99 @@ function extractTechnologiesFromDescription(description: string): string[] {
   );
 }
 
-const MEDIA_GRADIENTS = [
-  "from-primary/15 via-primary/5 to-transparent",
-  "from-emerald-500/15 via-emerald-500/5 to-transparent",
-  "from-sky-500/15 via-sky-500/5 to-transparent",
-  "from-amber-500/15 via-amber-500/5 to-transparent",
-];
+function getProjectVisual(title: string) {
+  const lower = title.toLowerCase();
+  if (lower.includes('invoice')) {
+    return {
+      Icon: FileText,
+      gradient: 'from-amber-500/20 via-orange-500/10 to-transparent',
+      badge: 'Desktop App • Java',
+      accentColor: 'text-amber-500',
+    };
+  }
+  if (lower.includes('tenant') || lower.includes('ghar')) {
+    return {
+      Icon: Home,
+      gradient: 'from-emerald-500/20 via-teal-500/10 to-transparent',
+      badge: 'Full-Stack Web App',
+      accentColor: 'text-emerald-500',
+    };
+  }
+  if (lower.includes('chess') || lower.includes('knight')) {
+    return {
+      Icon: Gamepad2,
+      gradient: 'from-purple-500/20 via-indigo-500/10 to-transparent',
+      badge: 'Algorithm & Strategy Game',
+      accentColor: 'text-purple-500',
+    };
+  }
+  if (lower.includes("fall") || lower.includes("game")) {
+    return {
+      Icon: Gamepad2,
+      gradient: 'from-pink-500/20 via-rose-500/10 to-transparent',
+      badge: 'Unity Game • Android/PC',
+      accentColor: 'text-pink-500',
+    };
+  }
+  if (lower.includes('timetable') || lower.includes('schedule')) {
+    return {
+      Icon: Calendar,
+      gradient: 'from-blue-500/20 via-cyan-500/10 to-transparent',
+      badge: 'Research & Genetic Algorithm',
+      accentColor: 'text-blue-500',
+    };
+  }
+  if (lower.includes('browser') || lower.includes('nidhi')) {
+    return {
+      Icon: Globe,
+      gradient: 'from-cyan-500/20 via-sky-500/10 to-transparent',
+      badge: 'Android Browser • Java',
+      accentColor: 'text-cyan-500',
+    };
+  }
+  if (lower.includes('parallax') || lower.includes('website')) {
+    return {
+      Icon: Layout,
+      gradient: 'from-violet-500/20 via-fuchsia-500/10 to-transparent',
+      badge: 'Responsive Web Design',
+      accentColor: 'text-violet-500',
+    };
+  }
+  if (lower.includes('care') || lower.includes('nest')) {
+    return {
+      Icon: HeartHandshake,
+      gradient: 'from-primary/25 via-primary/10 to-transparent',
+      badge: 'Healthcare & NDIS SaaS',
+      accentColor: 'text-primary',
+    };
+  }
 
-function ProjectMonogram({ title, index }: { title: string; index: number }) {
-  const initials = title
-    .split(/\s+/)
-    .map((word) => word[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  return {
+    Icon: Laptop,
+    gradient: 'from-primary/20 via-accent-foreground/10 to-transparent',
+    badge: 'Software Engineering',
+    accentColor: 'text-primary',
+  };
+}
+
+function ProjectCover({ title }: { title: string }) {
+  const visual = getProjectVisual(title);
+  const IconComponent = visual.Icon;
 
   return (
     <div
-      className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${
-        MEDIA_GRADIENTS[index % MEDIA_GRADIENTS.length]
-      }`}
+      className={`relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-br ${visual.gradient}`}
       aria-hidden="true"
     >
-      <span className="text-5xl font-semibold tracking-tight text-foreground/25">{initials}</span>
+      <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-15 pointer-events-none" />
+      <div className="relative z-10 flex flex-col items-center justify-center gap-2.5 p-4 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border/80 bg-background/85 shadow-md backdrop-blur-sm group-hover:scale-110 transition-transform duration-300">
+          <IconComponent className={`h-7 w-7 ${visual.accentColor}`} />
+        </div>
+        <span className="text-xs font-semibold text-foreground/80 tracking-wide px-2.5 py-0.5 rounded-full bg-background/60 border border-border/60 backdrop-blur-sm">
+          {visual.badge}
+        </span>
+      </div>
     </div>
   );
 }
@@ -227,7 +309,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       key={index}
       className="group flex flex-col overflow-hidden rounded-[1.75rem] border-border/70 bg-card/95 shadow-[0_18px_50px_rgba(20,24,62,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_60px_rgba(20,24,62,0.12)]"
     >
-      {/* Media header: project image from the sheet, monogram fallback */}
+      {/* Media header: project image from the sheet, rich cover fallback */}
       <div className="relative h-44 w-full overflow-hidden border-b border-border/60">
         {project.image && !imageFailed ? (
           <img
@@ -238,7 +320,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <ProjectMonogram title={title} index={index} />
+          <ProjectCover title={title} />
         )}
         {project.date_range && (
           <span className="absolute right-3 top-3 rounded-full border border-border/70 bg-background/85 px-3 py-1 text-xs text-muted-foreground shadow-sm backdrop-blur">
@@ -301,9 +383,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 }
 
 export default function ProjectsPage() {
-  const { data: profileData, error, isLoading, isWarming } = useApi<ProfileData>('/profile', {
-    dedupingInterval: 300000, // 5 minutes cache
-  });
+  const { data: profileData, error, isLoading, isWarming } = useApi<ProfileData>('/profile');
   
   // Process projects to enhance them with structured technologies, using fallback if needed
   const projects = React.useMemo(() => {
