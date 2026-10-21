@@ -6,6 +6,8 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ServerWarmingScreen } from "@/components/ServerWarmingScreen";
 import { useApi } from "@/hooks/useApi";
 
+import { FALLBACK_PROFILE_DATA } from "@/lib/fallback-data";
+
 // Define types for profile data
 interface BasicInfo {
   name: string;
@@ -16,40 +18,42 @@ interface BasicInfo {
 
 interface Experience {
   company: string;
-  role: string;
+  role?: string;
+  title?: string;
   date_range: string;
   description: string;
 }
 
 interface Education {
-  school: string;
+  school?: string;
+  institution?: string;
   degree: string;
-  date_range: string;
+  date_range?: string;
 }
 
 interface ProfileData {
   basic_info: BasicInfo;
-  about: string;
+  about?: string;
   experience: Experience[];
   education: Education[];
-  skills: string[];
+  skills: any;
   projects: any[];
-  certifications: any[];
+  certifications?: any[];
   last_updated?: string;
 }
 
 const FALLBACK_DATA: ProfileData = {
   basic_info: {
-    name: "Bishal Budhathoki",
-    headline: "Software Developer",
-    location: "Remote",
+    name: FALLBACK_PROFILE_DATA.basic_info.name,
+    headline: FALLBACK_PROFILE_DATA.basic_info.headline,
+    location: FALLBACK_PROFILE_DATA.basic_info.location,
     profile_image: "/images/01.png",
   },
-  about: "No information available at the moment.",
-  experience: [],
-  education: [],
-  skills: [],
-  projects: [],
+  about: FALLBACK_PROFILE_DATA.basic_info.about || "",
+  experience: (FALLBACK_PROFILE_DATA.experience as Experience[]) || [],
+  education: (FALLBACK_PROFILE_DATA.education as Education[]) || [],
+  skills: FALLBACK_PROFILE_DATA.skills,
+  projects: FALLBACK_PROFILE_DATA.projects,
   certifications: [],
   last_updated: new Date().toISOString(),
 };
@@ -214,8 +218,8 @@ export default function AboutPage() {
               experience.map((exp: Experience, index: number) => (
                 <div key={index} className="border-l-2 border-primary/50 pl-6 ml-2 relative">
                   <div className="absolute w-4 h-4 bg-primary rounded-full -left-[10px] top-1"></div>
-                  <h3 className="text-xl font-bold text-foreground">{exp.role}</h3>
-                  <p className="text-lg text-muted-foreground">{exp.company}</p>
+                  <h3 className="text-xl font-bold text-foreground">{exp.role || exp.title || "Software Engineer"}</h3>
+                  <p className="text-lg text-muted-foreground">{(exp.company || "").replace(/^\s+|\s+$/g, "")}</p>
                   <div className="flex items-center text-sm text-muted-foreground/70 mt-1 mb-4">
                     <Calendar className="mr-2 h-4 w-4 text-accent-foreground" />
                     {exp.date_range}
@@ -253,11 +257,13 @@ export default function AboutPage() {
                 <div key={index} className="border-l-2 border-accent-foreground/50 pl-6 ml-2 relative">
                   <div className="absolute w-4 h-4 bg-accent-foreground rounded-full -left-[10px] top-1"></div>
                   <h3 className="text-xl font-bold text-foreground">{edu.degree}</h3>
-                  <p className="text-lg text-muted-foreground">{edu.school}</p>
-                  <div className="flex items-center text-sm text-muted-foreground/70 mt-1 mb-4">
-                    <Calendar className="mr-2 h-4 w-4 text-accent-foreground" />
-                    {edu.date_range}
-                  </div>
+                  <p className="text-lg text-muted-foreground">{edu.school || edu.institution}</p>
+                  {edu.date_range && (
+                    <div className="flex items-center text-sm text-muted-foreground/70 mt-1 mb-4">
+                      <Calendar className="mr-2 h-4 w-4 text-accent-foreground" />
+                      {edu.date_range}
+                    </div>
+                  )}
                 </div>
               ))
             ) : (

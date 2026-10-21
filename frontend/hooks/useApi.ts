@@ -20,7 +20,11 @@ const defaultOptions: ApiOptions = {
 // Default fetcher that handles API responses, cold-starts, and errors
 const defaultFetcher = async (url: string) => {
   const timestamp = new Date().getTime();
-  const fullUrl = url.includes('?') ? `${url}&t=${timestamp}` : `${url}?t=${timestamp}`;
+  const [base, query] = url.split('?');
+  const normalizedBase = base.endsWith('/') ? base : `${base}/`;
+  const fullUrl = query 
+    ? `${normalizedBase}?${query}&t=${timestamp}` 
+    : `${normalizedBase}?t=${timestamp}`;
   
   const response = await fetch(fullUrl);
   
@@ -41,10 +45,13 @@ export function useApi<T>(path: string, options?: ApiOptions) {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
   const isServerSide = typeof window === 'undefined';
   
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  const pathWithSlash = cleanPath.endsWith('/') ? cleanPath : `${cleanPath}/`;
+
   // Use a relative URL if on client-side, otherwise use absolute URL
   const fullUrl = isServerSide 
-    ? `${apiUrl}/api${path}` 
-    : `/api${path}`;
+    ? `${apiUrl}/api${pathWithSlash}` 
+    : `/api${pathWithSlash}`;
     
   // Merge default options with user-provided options
   const swrOptions = { ...defaultOptions, ...options };

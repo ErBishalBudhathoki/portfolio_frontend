@@ -3,11 +3,14 @@ export interface BasicInfo {
   name: string;
   headline: string;
   location: string;
-  profile_image_url: string;
+  profile_image_url?: string;
+  profile_image?: string;
+  about?: string;
 }
 
 export interface Experience {
-  title: string;
+  title?: string;
+  role?: string;
   company: string;
   date_range: string;
   description: string;
@@ -15,35 +18,50 @@ export interface Experience {
 }
 
 export interface Education {
-  institution: string;
+  institution?: string;
+  school?: string;
   degree: string;
-  field: string;
-  date_range: string;
+  field?: string;
+  date_range?: string;
 }
 
 export interface Project {
-  title: string;
+  title?: string;
+  name?: string;
   description: string;
-  image_url: string;
-  link: string;
-  technologies: string[];
+  image_url?: string;
+  image?: string;
+  link?: string;
+  repository?: string;
+  live_demo?: string;
+  technologies?: string[];
+  date_range?: string;
 }
 
 export interface Skill {
   name: string;
   category: string;
+  endorsements?: string | number;
+  icon?: string;
+  category_order?: string | number;
+  skill_order?: string | number;
+  display_category?: string;
 }
 
 export interface Skills {
   technical: string[];
   soft: string[];
+  raw?: Skill[];
 }
 
 export interface ProfileData {
   basic_info: BasicInfo;
+  about?: string;
   experience: Experience[];
   education: Education[];
-  skills: Skills;
+  skills: Skills | Skill[] | any;
   projects: Project[];
   cv_url: string;
+  certifications?: any[];
+  last_updated?: string;
 } 

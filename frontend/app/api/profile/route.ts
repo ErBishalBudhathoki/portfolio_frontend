@@ -45,7 +45,11 @@ export async function GET() {
       if (data.experience && Array.isArray(data.experience)) {
         data.experience = data.experience.map((exp: ExperienceItem) => ({
           ...exp,
-          title: exp.title || exp.role,
+          company: (exp.company || '').replace(/^\s+|\s+$/g, '').trim(),
+          title: (exp.title || exp.role || 'Software Engineer').trim(),
+          role: (exp.role || exp.title || 'Software Engineer').trim(),
+          description: (exp.description || '').trim(),
+          date_range: (exp.date_range || '').trim(),
         }));
       }
 

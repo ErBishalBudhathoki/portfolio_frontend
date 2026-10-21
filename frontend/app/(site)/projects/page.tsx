@@ -43,7 +43,7 @@ async function getProfileData(): Promise<ProfileData> {
     
     // Add a timestamp to avoid caching issues
     const timestamp = new Date().getTime();
-    const endpoint = `/api/profile?t=${timestamp}`;
+    const endpoint = `/api/profile/?t=${timestamp}`;
     
     console.log(`Projects page - Attempting to fetch profile data using relative URL: ${endpoint}`);
     
@@ -137,16 +137,16 @@ async function getProfileData(): Promise<ProfileData> {
 function getDefaultProfileData(): ProfileData {
   return {
     basic_info: {
-      name: "Bishal Budhathoki",
-      headline: "Software Developer",
-      location: "Remote",
-      profile_image: "",
+      name: FALLBACK_PROFILE_DATA.basic_info.name,
+      headline: FALLBACK_PROFILE_DATA.basic_info.headline,
+      location: FALLBACK_PROFILE_DATA.basic_info.location,
+      profile_image: "/images/01.png",
     },
-    about: "",
-    experience: [],
-    education: [],
-    skills: [],
-    projects: [],
+    about: FALLBACK_PROFILE_DATA.basic_info.about || "",
+    experience: FALLBACK_PROFILE_DATA.experience || [],
+    education: FALLBACK_PROFILE_DATA.education || [],
+    skills: (FALLBACK_PROFILE_DATA.skills as any)?.technical || [],
+    projects: (FALLBACK_PROFILE_DATA.projects as Project[]) || [],
     certifications: []
   };
 }

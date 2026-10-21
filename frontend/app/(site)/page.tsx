@@ -34,6 +34,67 @@ function convertToDriveDirectLink(url: string | null): string | null {
 export const dynamic = "force-dynamic"; // Always evaluate fresh data
 export const revalidate = 0;
 
+function normalizeProfileData(data: any): ProfileData {
+  if (!data) return data;
+
+  const rawExperience = Array.isArray(data.experience) ? data.experience : [];
+  const normalizedExperience: Experience[] = rawExperience.map((exp: any) => ({
+    ...exp,
+    title: (exp.title || exp.role || 'Software Engineer').trim(),
+    role: (exp.role || exp.title || 'Software Engineer').trim(),
+    company: (exp.company || '').replace(/^\s+|\s+$/g, '').trim(),
+    date_range: (exp.date_range || '').trim(),
+    description: (exp.description || '').trim(),
+  }));
+
+  // Handle skills whether an array of objects or an object
+  let technicalList: string[] = [];
+  let softList: string[] = [];
+
+  if (Array.isArray(data.skills)) {
+    data.skills.forEach((s: any) => {
+      const name = typeof s === 'string' ? s.trim() : (s.name || '').trim();
+      const cat = typeof s === 'object' ? (s.category || '') : '';
+      if (!name) return;
+      if (cat.toLowerCase().includes('soft') || /problem solving|communication|leadership|adaptability|multi-task/i.test(name)) {
+        softList.push(name);
+      } else {
+        technicalList.push(name);
+      }
+    });
+  } else if (data.skills && typeof data.skills === 'object') {
+    technicalList = Array.isArray(data.skills.technical) ? data.skills.technical : [];
+    softList = Array.isArray(data.skills.soft) ? data.skills.soft : [];
+  }
+
+  if (softList.length === 0) {
+    softList = ['Problem Solving', 'Team Leadership', 'Skilled Multi-tasker', 'Student Leadership', 'Adaptability', 'Communication'];
+  }
+
+  return {
+    ...data,
+    basic_info: {
+      ...data.basic_info,
+      name: data.basic_info?.name || "Bishal Budhathoki",
+      headline: data.basic_info?.headline || "Software Engineer | Full-Stack Dev | Flutter, Kotlin, Java, NodeJS",
+      location: data.basic_info?.location || "Sydney",
+      profile_image_url: "/images/01.png",
+    },
+    experience: normalizedExperience,
+    skills: {
+      technical: technicalList,
+      soft: softList,
+      raw: Array.isArray(data.skills) ? data.skills : [],
+    },
+    projects: Array.isArray(data.projects) ? data.projects.map((p: any) => ({
+      ...p,
+      title: p.title || p.name || 'Project',
+      name: p.name || p.title || 'Project',
+    })) : [],
+    cv_url: data.cv_url || 'https://drive.google.com/file/d/1KwrQenriXayZag4hPT9H2d_Jzw605JvV/view?usp=sharing',
+  };
+}
+
 /**
  * Fetch profile data server-side with cold-start tolerance.
  * The backend runs on Cloud Run with --min-instances=0, meaning an idle container
@@ -59,7 +120,7 @@ async function getProfileData(): Promise<ProfileData | null> {
 
       const data = await response.json();
       if (data && (data.basic_info || data.experience || data.projects)) {
-        return data;
+        return normalizeProfileData(data);
       }
       throw new Error('Profile response was empty');
     } catch (error) {
@@ -232,29 +293,33 @@ export default async function Home() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-5xl mx-auto">
             {experience && experience.length > 0 ? (
-              experience.slice(0, 2).map((exp: Experience, index: number) => (
-                <div
-                  key={index}
-                  className="bg-card rounded-xl shadow-md p-8 card-compact border border-border hover:shadow-lg hover:border-accent-foreground/30 transition-all duration-300"
-                >
-                  <div className="flex items-start">
-                    <div className="shrink-0 mr-4 bg-primary/20 p-3 rounded-full">
-                      <Briefcase className="text-primary w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg sm:text-xl text-foreground mb-2">{exp.title}</h3>
-                      <p className="text-muted-foreground mb-2 font-medium">
-                        {exp.company}
-                      </p>
-                      <p className="text-xs sm:text-sm text-muted-foreground/70 mb-4 inline-flex items-center">
-                        <Calendar className="w-3 h-3 mr-1 text-accent-foreground" />
-                        {exp.date_range}
-                      </p>
-                      <p className="text-sm text-muted-foreground/80 line-clamp-3">{exp.description}</p>
+              experience.slice(0, 4).map((exp: Experience, index: number) => {
+                const roleTitle = exp.title || exp.role || "Software Engineer";
+                const companyName = exp.company?.replace(/^\s+|\s+$/g, '') || "";
+                return (
+                  <div
+                    key={index}
+                    className="bg-card rounded-xl shadow-md p-8 card-compact border border-border hover:shadow-lg hover:border-accent-foreground/30 transition-all duration-300"
+                  >
+                    <div className="flex items-start">
+                      <div className="shrink-0 mr-4 bg-primary/20 p-3 rounded-full">
+                        <Briefcase className="text-primary w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg sm:text-xl text-foreground mb-2">{roleTitle}</h3>
+                        <p className="text-muted-foreground mb-2 font-medium">
+                          {companyName}
+                        </p>
+                        <p className="text-xs sm:text-sm text-muted-foreground/70 mb-4 inline-flex items-center">
+                          <Calendar className="w-3 h-3 mr-1 text-accent-foreground" />
+                          {exp.date_range}
+                        </p>
+                        <p className="text-sm text-muted-foreground/80 line-clamp-3">{exp.description}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="col-span-2 text-center py-12">
                 <div className="bg-card rounded-xl border border-border p-8">
@@ -323,13 +388,31 @@ export default async function Home() {
                   </div>
                   
                   <div className="space-y-5">
+                    {/* Mobile Development */}
+                    <div className="space-y-3">
+                      <h4 className="text-md font-semibold text-foreground/90 border-l-2 border-indigo-500 pl-3">Mobile Development</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {skills && ('technical' in skills) && Array.isArray(skills.technical) ?
+                          skills.technical.filter(skill => 
+                            ['flutter', 'kotlin', 'android', 'ios', 'mobile', 'dart'].some(
+                              tech => skill.toLowerCase().includes(tech.toLowerCase())
+                            )
+                          ).slice(0, 6).map((skill, idx) => (
+                            <span key={idx} className="px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-500 border border-indigo-500/30 rounded-full text-sm font-medium transition-all hover:scale-105">
+                              {skill}
+                            </span>
+                          )) : null
+                        }
+                      </div>
+                    </div>
+
                     {/* Frontend Development */}
                     <div className="space-y-3">
                       <h4 className="text-md font-semibold text-foreground/90 border-l-2 border-primary pl-3">Frontend Development</h4>
                       <div className="flex flex-wrap gap-2">
                         {skills && ('technical' in skills) && Array.isArray(skills.technical) ?
                           skills.technical.filter(skill => 
-                            ['javascript', 'react', 'next', 'vue', 'html', 'css', 'typescript', 'angular', 'ui', 'frontend', 'jsx', 'web', 'dom', 'responsive', 'scss', 'sass'].some(
+                            ['javascript', 'react', 'next', 'vue', 'html', 'css', 'typescript', 'angular', 'ui', 'frontend', 'jsx', 'web', 'dom', 'responsive', 'scss', 'sass', 'xml'].some(
                               tech => skill.toLowerCase().includes(tech.toLowerCase())
                             )
                           ).slice(0, 6).map((skill, idx) => (
@@ -347,10 +430,10 @@ export default async function Home() {
                       <div className="flex flex-wrap gap-2">
                         {skills && ('technical' in skills) && Array.isArray(skills.technical) ?
                           skills.technical.filter(skill => 
-                            ['node', 'express', 'django', 'python', 'java', 'php', 'api', 'graphql', 'rest', 'backend', 'flask', 'server', 'fastapi', 'spring', 'ruby'].some(
+                            ['node', 'express', 'django', 'python', 'java', 'php', 'api', 'graphql', 'rest', 'backend', 'flask', 'server', 'fastapi', 'spring', 'ruby', 'c#', 'c++', 'core java'].some(
                               tech => skill.toLowerCase().includes(tech.toLowerCase())
                             )
-                          ).slice(0, 5).map((skill, idx) => (
+                          ).slice(0, 6).map((skill, idx) => (
                             <span key={idx} className="px-3 py-1.5 bg-accent-foreground/10 hover:bg-accent-foreground/20 text-accent-foreground border border-accent-foreground/30 rounded-full text-sm font-medium transition-all hover:scale-105">
                               {skill}
                             </span>
@@ -383,10 +466,10 @@ export default async function Home() {
                       <div className="flex flex-wrap gap-2">
                         {skills && ('technical' in skills) && Array.isArray(skills.technical) ?
                           skills.technical.filter(skill => 
-                            ['aws', 'azure', 'gcp', 'cloud', 'docker', 'kubernetes', 'jenkins', 'ci', 'cd', 'git', 'devops', 'github', 'gitlab', 'terraform', 'infrastructure', 'deploy'].some(
+                            ['aws', 'azure', 'gcp', 'cloud', 'docker', 'kubernetes', 'jenkins', 'ci', 'cd', 'git', 'devops', 'github', 'gitlab', 'bitbucket', 'terraform', 'infrastructure', 'deploy'].some(
                               tech => skill.toLowerCase().includes(tech.toLowerCase())
                             )
-                          ).slice(0, 5).map((skill, idx) => (
+                          ).slice(0, 6).map((skill, idx) => (
                             <span key={idx} className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 rounded-full text-sm font-medium transition-all hover:scale-105">
                               {skill}
                             </span>
@@ -401,7 +484,7 @@ export default async function Home() {
                       <div className="flex flex-wrap gap-2">
                         {skills && ('technical' in skills) && Array.isArray(skills.technical) ?
                           skills.technical.filter(skill => 
-                            ['ai', 'ml', 'machine learning', 'deep learning', 'tensorflow', 'pytorch', 'nlp', 'neural', 'gpt', 'chatgpt', 'data science', 'opencv', 'computer vision', 'llm'].some(
+                            ['ai', 'ml', 'machine learning', 'deep learning', 'tensorflow', 'pytorch', 'nlp', 'neural', 'gpt', 'generative ai', 'responsible ai', 'chatgpt', 'data science', 'opencv', 'computer vision', 'llm'].some(
                               tech => skill.toLowerCase().includes(tech.toLowerCase())
                             )
                           ).slice(0, 5).map((skill, idx) => (
