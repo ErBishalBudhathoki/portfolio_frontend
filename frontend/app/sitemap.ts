@@ -4,58 +4,59 @@ import { createSlug } from '@/lib/slug';
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://bishalbudhathoki.com';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 3600; // revalidate at most every hour
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+  const today = now.toISOString().split('T')[0]; // Clean W3C YYYY-MM-DD format for Google Search Console
 
   // Core static routes
   const staticRoutes: MetadataRoute.Sitemap = [
     {
-      url: `${BASE_URL}`,
-      lastModified: now,
+      url: `${BASE_URL}/`,
+      lastModified: today,
       changeFrequency: 'weekly',
       priority: 1.0,
     },
     {
       url: `${BASE_URL}/about`,
-      lastModified: now,
+      lastModified: today,
       changeFrequency: 'monthly',
       priority: 0.9,
     },
     {
       url: `${BASE_URL}/projects`,
-      lastModified: now,
+      lastModified: today,
       changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
       url: `${BASE_URL}/skills`,
-      lastModified: now,
+      lastModified: today,
       changeFrequency: 'weekly',
       priority: 0.85,
     },
     {
       url: `${BASE_URL}/blog`,
-      lastModified: now,
+      lastModified: today,
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
       url: `${BASE_URL}/contact`,
-      lastModified: now,
+      lastModified: today,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
       url: `${BASE_URL}/carenest/support`,
-      lastModified: now,
+      lastModified: today,
       changeFrequency: 'monthly',
       priority: 0.5,
     },
     {
       url: `${BASE_URL}/carenest/privacy-policy`,
-      lastModified: now,
+      lastModified: today,
       changeFrequency: 'monthly',
       priority: 0.5,
     },
@@ -66,7 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://portfolio-backend-824962762241.us-central1.run.app';
     const response = await fetch(`${apiUrl}/api/profile`, {
       next: { revalidate: 3600 },
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(4000),
     });
 
     if (response.ok) {
@@ -77,10 +78,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .filter((post: any) => post?.title)
         .map((post: any) => {
           const slug = post.slug || createSlug(post.title);
-          const postDate = post.publication_date || post.date ? new Date(post.publication_date || post.date) : now;
+          const rawDate = post.publication_date || post.date;
+          let dateStr = today;
+          if (rawDate) {
+            const d = new Date(rawDate);
+            if (!isNaN(d.getTime())) {
+              dateStr = d.toISOString().split('T')[0];
+            }
+          }
           return {
             url: `${BASE_URL}/blog/${slug}`,
-            lastModified: isNaN(postDate.getTime()) ? now : postDate,
+            lastModified: dateStr,
             changeFrequency: 'monthly' as const,
             priority: 0.8,
           };
