@@ -1,6 +1,61 @@
-# Allow all web crawlers
+# Robots.txt for https://bishalbudhathoki.com
+# Agentic SEO & Search Engine Optimization
+
+# Emerging LLM & AI agent reference:
+# LLM-friendly documentation is available at https://bishalbudhathoki.com/llms.txt
+
+# Default rule for all web crawlers
 User-agent: *
 Allow: /
- 
-# Sitemap location
-Sitemap: https://bishalbudhathoki.com/sitemap.xml 
+Disallow: /admin/
+Disallow: /api/admin/
+Disallow: /loading-demo
+
+# Dedicated rules for AI Search Engines & LLM Web Crawlers
+User-agent: GPTBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/admin/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/admin/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/admin/
+
+User-agent: Claude-Web
+Allow: /
+Disallow: /admin/
+Disallow: /api/admin/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/admin/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /admin/
+Disallow: /api/admin/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /admin/
+Disallow: /api/admin/
+
+User-agent: cohere-ai
+Allow: /
+Disallow: /admin/
+Disallow: /api/admin/
+
+User-agent: CCBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/admin/
+
+# Sitemaps
+Sitemap: https://bishalbudhathoki.com/sitemap.xml

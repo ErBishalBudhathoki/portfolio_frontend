@@ -1,0 +1,163 @@
+# Bishal Budhathoki - Comprehensive Engineering Portfolio & Technical Reference
+
+> Full-Stack Developer & Software Engineer | Sydney, Australia  
+> Canonical URL: https://bishalbudhathoki.com  
+> Last Updated: 2026-10-22
+
+---
+
+## 1. Executive Summary
+Bishal Budhathoki is a Sydney-based Software Engineer specializing in full-lifecycle mobile application development, modern reactive web applications, scalable backend microservices, and cloud deployment pipelines. Holding a Master of Information Technology from CQUniversity, he combines formal software engineering principles with practical industry experience across Flutter, Kotlin, Android, iOS, React, Next.js, Node.js, Python/FastAPI, and Google Cloud Platform.
+
+---
+
+## 2. Professional Identity & Contact Information
+- **Name**: Bishal Budhathoki
+- **Professional Title**: Software Engineer | Full-Stack Developer
+- **Location**: Sydney, New South Wales, Australia
+- **Primary Website**: https://bishalbudhathoki.com
+- **LinkedIn**: https://www.linkedin.com/in/bishalbudhathoki/
+- **GitHub**: https://github.com/ErBishalBudhathoki
+- **Twitter/X**: https://x.com/bis2vis
+- **Resume/CV**: https://drive.google.com/file/d/1KwrQenriXayZag4hPT9H2d_Jzw605JvV/view?usp=sharing
+- **Work Eligibility**: Australia (Full Working Rights)
+
+---
+
+## 3. Technology Stack & Skill Inventory
+
+### Mobile Development
+- **Flutter & Dart**: State management (Bloc, Provider), custom UI component systems, REST/GraphQL integration, offline storage, responsive cross-platform layout (Android & iOS).
+- **Kotlin & Android SDK**: Native Android lifecycle, Coroutines, Jetpack components, Retrofit, Material Design, Firebase SDK integration.
+- **Cross-Platform Delivery**: Unified codebase delivery across web, Android, and iOS targets with native platform bridge integration.
+
+### Web & Frontend Engineering
+- **React.js & Next.js**: App Router, Server Components (RSC), SSR, SSG, incremental static regeneration, dynamic routing, performance optimization, streaming UI.
+- **Languages**: TypeScript, JavaScript (ES6+), HTML5, CSS3/SCSS.
+- **Styling & UI Systems**: Tailwind CSS, Shadcn UI, Radix UI primitives, Lucide icons, responsive design patterns, CSS-in-JS, dark mode ergonomics.
+- **State Management & Data Fetching**: SWR, React Query, Context API.
+
+### Backend, APIs & Microservices
+- **Node.js & Express**: Event-driven services, JWT/session authentication, API rate-limiting, middleware architecture.
+- **Python & FastAPI**: Async REST microservices, Pydantic data schemas, Google Sheets API dynamic ETL pipelines, GitHub GraphQL API proxying, in-memory TTL caching.
+- **Java**: Core Java, object-oriented software design patterns, multithreading, algorithmic scheduling, desktop applications (Swing).
+- **API Protocols**: RESTful architecture, GraphQL, JSON Schema validation, CORS policy configuration.
+
+### Cloud, Databases & DevOps
+- **Cloud Infrastructure**: Google Cloud Platform (Cloud Run, Cloud Build, Artifact Registry), Firebase (Auth, Firestore, Storage, Realtime Database, Cloud Messaging).
+- **Databases**: PostgreSQL, MongoDB, Firebase Firestore, relational database schema normalization, indexing.
+- **Containers & DevOps**: Docker, containerized build pipelines, continuous integration & deployment (CI/CD) via GitHub Actions and Google Cloud Build triggers.
+- **Version Control & Collaboration**: Git, GitHub, branching workflows, peer review, code quality tooling.
+
+### Soft Skills & Professional Competencies
+- Analytical problem solving and algorithmic reasoning
+- Cross-functional communication with technical and non-technical stakeholders
+- Agile / Scrum sprint execution and sprint planning
+- Customer requirements elicitation and product ownership mindset
+- Continuous self-learning and proactive technology adoption
+
+---
+
+## 4. Notable Software Engineering Projects
+
+### 4.1 CareNest
+- **Domain**: NDIS (National Disability Insurance Scheme) & Australian Disability Care Management
+- **Description**: An integrated care management, shift logging, and invoicing platform built specifically for Australian NDIS disability support providers and independent support coordinators.
+- **Capabilities**:
+  - Worker shift scheduling and GPS-aware arrival verification.
+  - Client progress note recording with privacy compliance.
+  - Timesheet tracking with automatic overtime and weekend penalty calculation.
+  - Single-click NDIS-compliant bulk invoice generation with line-item code mapping.
+  - Role-based access control (Admin, Support Coordinator, Worker, Client).
+- **Tech Stack**: Flutter, Dart, Node.js, Firebase Firestore, Google Cloud Run microservices.
+- **Repository / Link**: https://bishalbudhathoki.com/projects
+
+### 4.2 Hamro Ghar (Tenant-Web-App)
+- **Domain**: Property & Rental Accommodation Management
+- **Description**: Full-stack web application developed to simplify tenant agreements, room allocation, maintenance ticketing, and payment tracking for landlords and shared house occupants.
+- **Capabilities**:
+  - Tenant onboarding and lease duration tracking.
+  - Rent ledger with automated receipt generation.
+  - Maintenance request pipeline with image uploads and status progression.
+- **Tech Stack**: React.js, Node.js, Express, MongoDB, Tailwind CSS.
+- **Repository / Link**: https://bishalbudhathoki.com/projects
+
+### 4.3 Invoice Generator
+- **Domain**: Enterprise Billing & Accounting
+- **Description**: Robust desktop accounting tool built in Java for generating, managing, and printing compliant commercial invoices.
+- **Capabilities**:
+  - Itemized pricing, dynamic tax computations, and currency formatting.
+  - Clean vector PDF export using document generation libraries.
+  - Local persistence for repeat client catalogs.
+- **Tech Stack**: Java, Swing, PDF Generation Libraries.
+
+### 4.4 Automated Timetable Generation System
+- **Domain**: Higher Education & Algorithmic Scheduling
+- **Description**: Research application developed to solve the NP-hard university course timetabling problem without classroom or instructor collisions.
+- **Capabilities**:
+  - Genetic algorithms and heuristic constraint satisfaction.
+  - Multi-objective fitness function evaluating room capacity, instructor preferences, and student cohorts.
+  - Published in a peer-reviewed international journal.
+- **Tech Stack**: Java, Genetic Algorithms, Heuristic Optimization.
+
+### 4.5 Don't Fall & Algorithmic Games
+- **Domain**: Mobile & Interactive Game Engineering
+- **Description**: Physics-based balance mobile game and algorithmic chess pathfinding utilities.
+- **Capabilities**: Custom collision systems, state machines, and touch input normalization.
+- **Tech Stack**: Unity, C#, Java, Android SDK.
+
+---
+
+## 5. Work Experience
+
+### Mobile Application Developer | Geeks Australia
+*Jul 2022 – Sep 2022 | Sydney, Australia*
+- Maintained and modernized enterprise multi-platform applications using Flutter and Kotlin for Android, iOS, and Web.
+- Collaborated on new client engagements, translating customer specifications into performant mobile interfaces.
+- Resolved cross-device UI inconsistencies, improved state synchronization, and minimized memory overhead.
+
+### IT Support Specialist | Geeks Australia
+*Jul 2022 – Jul 2022 | Sydney, Australia*
+- Delivered technical hardware diagnostics, network troubleshooting, and client-facing resolutions.
+- Documented customer issues and streamlined repair and deployment procedures.
+
+### Professional Year Intern | QIBA / Professional Year
+*Sep 2021 – Sep 2022 | Sydney, Australia*
+- Completed intensive ACS-accredited professional program focusing on Australian workplace culture, business communication, and agile delivery.
+- Successfully applied agile software delivery standards in an enterprise environment.
+
+### Engineering Virtual Program Intern | Goldman Sachs
+*Jun 2021 – Jul 2021 | Virtual Experience*
+- Investigated leaked authentication databases and performed cryptographic forensics on password hashing algorithms.
+- Evaluated system attack surfaces and recommended defense-in-depth security mitigations.
+
+### Software Engineering Virtual Experience | JPMorgan Chase & Co.
+*Jun 2021 – Jun 2021 | Virtual Experience*
+- Built live data visualization tools interfacing with high-frequency stock price feeds for trading desks.
+- Implemented real-time market charts utilizing TypeScript and JPMorgan Chase developer toolkits.
+
+### Android Engineer Intern | Beforepay
+*Feb 2020 – Apr 2020 | Sydney, Australia*
+- Prepared and deployed alpha and beta Android builds via Firebase App Distribution.
+- Executed end-to-end device testing across dozens of hardware profiles, triaging regression bugs.
+- Implemented identity verification (KYC) workflows against backend database services.
+
+---
+
+## 6. Education & Academic Qualifications
+- **Master of Information Technology** (Specialization: Software Engineering & Mobile App Development)  
+  *CQUniversity Australia*
+- **Professional Year in Information Technology** (ACS Accredited)  
+  *QIBA, Sydney, Australia*
+- **Bachelor of Engineering in Computer Science & Engineering**  
+  *SJC Institute of Technology*
+
+---
+
+## 7. Verification & Canonical Links
+- Portfolio Homepage: https://bishalbudhathoki.com
+- Profile / About: https://bishalbudhathoki.com/about
+- Project Showcase: https://bishalbudhathoki.com/projects
+- Skills & Contribution Tracker: https://bishalbudhathoki.com/skills
+- Technical Blog: https://bishalbudhathoki.com/blog
+- Direct Contact: https://bishalbudhathoki.com/contact

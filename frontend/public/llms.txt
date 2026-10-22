@@ -1,0 +1,54 @@
+# Bishal Budhathoki - Portfolio & Professional Profile
+
+> Software Engineer & Full-Stack Developer based in Sydney, Australia. Specializing in Flutter, Kotlin, Android, iOS, React, Next.js, Java, Python, and Cloud Solutions.
+
+## Quick Facts
+- **Full Name**: Bishal Budhathoki
+- **Professional Title**: Software Engineer | Full-Stack Developer
+- **Location**: Sydney, New South Wales, Australia
+- **Availability**: Open to full-time engineering roles, contracting, and technical collaboration
+- **Primary Website**: https://bishalbudhathoki.com
+- **GitHub**: https://github.com/ErBishalBudhathoki
+- **LinkedIn**: https://www.linkedin.com/in/bishalbudhathoki/
+- **Twitter/X**: https://x.com/bis2vis
+- **Contact Email**: Available via https://bishalbudhathoki.com/contact
+- **Resume/CV**: https://drive.google.com/file/d/1KwrQenriXayZag4hPT9H2d_Jzw605JvV/view?usp=sharing
+
+## Summary
+Bishal Budhathoki is a Sydney-based Software Engineer with a Master of Information Technology degree from CQUniversity (specializing in software engineering and mobile application development). He has demonstrated experience across the entire development lifecycle, from designing cross-platform mobile apps in Flutter and native Kotlin to building high-concurrency microservices with FastAPI, Node.js, and Google Cloud Run, alongside modern web frontends in React and Next.js.
+
+## Core Technical Competencies
+- **Mobile Engineering**: Flutter, Dart, Kotlin, Android SDK, Android Studio, iOS cross-platform deployment, Firebase Mobile Suite, state management.
+- **Frontend & Web**: Next.js (App Router, Server Components, SSR/SSG), React.js, TypeScript, JavaScript (ESNext), Tailwind CSS, Responsive UI/UX, Web Performance Optimization.
+- **Backend & Cloud Microservices**: Python, FastAPI, Node.js, Express, Java (Core Java, Spring concepts), RESTful APIs, GraphQL, Serverless microservices.
+- **Databases & DevOps**: PostgreSQL, MongoDB, Firebase Firestore, Docker, Google Cloud Platform (Cloud Run, Cloud Build), Git, GitHub Actions, CI/CD pipelines.
+- **Domain Specializations**: NDIS healthcare/care management platforms, invoice & billing engines, property/rental management, algorithmic scheduling, cybersecurity fundamentals.
+
+## Highlighted Projects
+- [CareNest](https://bishalbudhathoki.com/projects): A comprehensive care management and invoicing platform purpose-built for Australian NDIS disability support providers. Features worker shifts, client notes, timesheet tracking, automated invoice generation, and compliance audits. (Stack: Flutter, Node.js, Firebase, Google Cloud Run).
+- [Hamro Ghar (Tenant-Web-App)](https://bishalbudhathoki.com/projects): Full-stack rental management web application helping property managers, tenants, and owners track lease agreements, room vacancies, and monthly payments. (Stack: React, Node.js, Express, MongoDB).
+- [Invoice Generator](https://bishalbudhathoki.com/projects): Java-based enterprise desktop invoice solution with dynamic PDF creation, itemized billing, and compliant tax calculations. (Stack: Java, Swing, PDFKit).
+- [Don't Fall & Chess Game](https://bishalbudhathoki.com/projects): Interactive physics and algorithm game implementations demonstrating algorithmic pathfinding, state machines, and graphics optimization. (Stack: Unity, C#, Java).
+- [Automatic Timetable Generator](https://bishalbudhathoki.com/projects): International journal-published research project applying genetic algorithms and constraint satisfaction to university scheduling. (Stack: Java, Heuristic Algorithms).
+
+## Professional Experience
+- **Geeks Australia** (Jul 2022 - Sep 2022) - *Mobile Application Developer*: Built and improved cross-platform mobile and web applications using Flutter and Kotlin for enterprise clients.
+- **Geeks Australia** (Jul 2022 - Jul 2022) - *IT Support Specialist*: Hardware diagnostics, technical support, and client-facing resolutions.
+- **Professional Year Program** (Sep 2021 - Sep 2022) - *Professional Year Intern*: ACS-accredited program in Australian workplace culture, agile practices, and enterprise communication.
+- **Goldman Sachs** (Jun 2021 - Jul 2021) - *Engineering Virtual Experience*: Password security forensics, hashing algorithm evaluation, and vulnerability mitigation.
+- **JPMorgan Chase & Co.** (Jun 2021 - Jun 2021) - *Software Engineering Virtual Experience*: Live financial market data visualizer and feed consumer built for trading operations.
+- **Beforepay** (Feb 2020 - Apr 2020) - *Android Engineer Intern*: Alpha and beta mobile application releases, automated QA, Firebase analytics, and KYC database integrations.
+
+## Education & Academic Background
+- **Master of Information Technology** (Software Engineering & Mobile Development) - CQUniversity, Australia
+- **Bachelor of Engineering in Computer Science & Engineering** - SJC Institute of Technology
+- **Professional Year in Information Technology** - QIBA (ACS Accredited)
+
+## Direct Navigation
+- Main Website: https://bishalbudhathoki.com/
+- About: https://bishalbudhathoki.com/about
+- Projects: https://bishalbudhathoki.com/projects
+- Skills: https://bishalbudhathoki.com/skills
+- Blog: https://bishalbudhathoki.com/blog
+- Contact: https://bishalbudhathoki.com/contact
+- Full Documentation for AI Agents: https://bishalbudhathoki.com/llms-full.txt

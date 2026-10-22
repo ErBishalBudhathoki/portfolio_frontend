@@ -146,6 +146,7 @@ data/
 !package-lock.json
 !tsconfig.json
 !components.json
+!manifest.json
 
 # Temporary files
 *.tmp

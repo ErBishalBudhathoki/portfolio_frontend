@@ -4,6 +4,9 @@ export const metadata: Metadata = {
   title: "CareNest Support",
   description:
     "CareNest support page with contact details, support scope, response times, and privacy assistance.",
+  alternates: {
+    canonical: "/carenest/support",
+  },
 };
 
 export { default } from "./carenest-support";
