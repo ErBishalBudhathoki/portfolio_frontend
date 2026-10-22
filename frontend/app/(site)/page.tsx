@@ -1,14 +1,33 @@
 import React from 'react';
 import Link from "next/link";
 import Image from "next/image";
-import { Briefcase, GraduationCap, ArrowRight, Download, ArrowDownToLine, ExternalLink, Calendar, MapPin, Code, UserRound } from "lucide-react";
+import {
+  Briefcase,
+  GraduationCap,
+  ArrowRight,
+  Download,
+  ArrowDownToLine,
+  ExternalLink,
+  Calendar,
+  MapPin,
+  Code,
+  UserRound,
+  Play,
+  Sparkles,
+  Smartphone,
+  Layers,
+  HeartHandshake,
+  Gamepad2,
+  Home as HomeIcon,
+  Github,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import "./animations.css"; // Import animation styles from CSS file
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ServerWarmingScreen } from "@/components/ServerWarmingScreen";
 import { ProfileData, Experience } from './types';
-import { MessageCircle } from 'lucide-react';
+import TechMarquee from '@/components/TechMarquee';
 
 // Define a constant for the profile image
 const LOCAL_PROFILE_IMAGE = '/images/01.png';
@@ -45,6 +64,7 @@ function normalizeProfileData(data: any): ProfileData {
     company: (exp.company || '').replace(/^\s+|\s+$/g, '').trim(),
     date_range: (exp.date_range || '').trim(),
     description: (exp.description || '').trim(),
+    technologies: Array.isArray(exp.technologies) ? exp.technologies : [],
   }));
 
   // Handle skills whether an array of objects or an object
@@ -97,9 +117,6 @@ function normalizeProfileData(data: any): ProfileData {
 
 /**
  * Fetch profile data server-side with cold-start tolerance.
- * The backend runs on Cloud Run with --min-instances=0, meaning an idle container
- * needs 15-30s to boot. Progressive retries ensure routine cold starts succeed
- * cleanly during SSR before falling back to the client-side warming screen.
  */
 async function getProfileData(): Promise<ProfileData | null> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://portfolio-backend-824962762241.us-central1.run.app';
@@ -107,7 +124,7 @@ async function getProfileData(): Promise<ProfileData | null> {
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      const timeoutMs = 6000 + attempt * 2000; // 8s, 10s, 12s, 14s
+      const timeoutMs = 6000 + attempt * 2000;
       const response = await fetch(`${apiUrl}/api/profile`, {
         next: { revalidate: 0 },
         cache: "no-store",
@@ -146,14 +163,16 @@ export default async function Home() {
     return <ServerWarmingScreen />;
   }
   
-  const { basic_info, experience, skills, cv_url, projects } = profileData;
-  
-  // Use the name from basic_info or fallback to a default
+  const { basic_info, experience, cv_url } = profileData;
   const displayName = basic_info?.name || "Bishal Budhathoki";
 
   return (
     <div className="bg-background">
-      {/* Hero Section with theme-aware background */}
+      {/* 
+        ========================================================================
+        Hero Section - Left 100% as original per user instruction
+        ========================================================================
+      */}
       <section className="relative overflow-hidden py-8 pb-2 md:py-16 bg-gradient-to-b from-background to-background dark:from-[#0a0f2a] dark:to-[#131c48]">
         <div className="absolute inset-0 z-0 bg-[url('/grid-pattern.svg')] opacity-10"></div>
         <div className="absolute w-full h-full z-0">
@@ -251,8 +270,7 @@ export default async function Home() {
                 {/* Gradient mask for better blending */}
                 <div className="absolute -inset-8 bg-gradient-to-b from-transparent via-background/10 to-background/20 dark:via-[#0a0f2a]/10 dark:to-[#0a0f2a]/20 blur-xl rounded-full"></div>
                 
-                {/* Main image container */}
-                {/* Profile image with pop-out effect */}
+                {/* Main image container with pop-out effect */}
                 <div className="w-[300px] h-[300px] md:w-[450px] md:h-[450px] relative z-10">
                   <div className="relative w-full h-full">
                     {/* Background circle with perfect bottom match */}
@@ -277,21 +295,32 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Featured Experience Section with theme-aware background */}
-      <section className="py-12 md:py-16 bg-gradient-to-b from-background to-background dark:from-[#131c48] dark:to-[#0a0f2a]">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col items-center mb-14">
-            <div className="inline-flex items-center justify-center p-1 px-3 mb-5 border border-accent-foreground/30 rounded-full bg-accent-foreground/5 text-accent-foreground text-sm font-medium">
-              <Briefcase className="w-4 h-4 mr-2" />
-              Professional Journey
+      {/* 
+        ========================================================================
+        Horizontal Moving Banner of Skills Icons from Skills Page
+        ========================================================================
+      */}
+      <TechMarquee />
+
+      {/* 
+        ========================================================================
+        Work Experience Section - Refined with badges and tech pills
+        ========================================================================
+      */}
+      <section className="py-14 md:py-20 bg-gradient-to-b from-background to-background dark:from-[#131c48] dark:to-[#0a0f2a]">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="flex flex-col items-center mb-14 text-center">
+            <div className="inline-flex items-center justify-center gap-2 px-3 py-1 mb-4 border border-accent-foreground/30 rounded-full bg-accent-foreground/5 text-accent-foreground text-xs font-semibold tracking-wider uppercase">
+              <Briefcase className="w-3.5 h-3.5" />
+              <span>Professional Journey</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-center text-foreground mb-8">
-              Work Experience
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+              Work Experience & Industry Programs
             </h2>
-            <div className="w-20 h-1 bg-accent-foreground rounded-full"></div>
+            <div className="w-16 h-1 bg-accent-foreground rounded-full mt-4"></div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {experience && experience.length > 0 ? (
               experience.slice(0, 4).map((exp: Experience, index: number) => {
                 const roleTitle = exp.title || exp.role || "Software Engineer";
@@ -299,30 +328,47 @@ export default async function Home() {
                 return (
                   <div
                     key={index}
-                    className="bg-card rounded-xl shadow-md p-8 card-compact border border-border hover:shadow-lg hover:border-accent-foreground/30 transition-all duration-300"
+                    className="group bg-card/90 rounded-2xl p-7 border border-border/80 shadow-md hover:shadow-xl hover:border-accent-foreground/40 transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between"
                   >
-                    <div className="flex items-start">
-                      <div className="shrink-0 mr-4 bg-primary/20 p-3 rounded-full">
-                        <Briefcase className="text-primary w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-lg sm:text-xl text-foreground mb-2">{roleTitle}</h3>
-                        <p className="text-muted-foreground mb-2 font-medium">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-accent-foreground/10 text-accent-foreground border border-accent-foreground/20">
                           {companyName}
-                        </p>
-                        <p className="text-xs sm:text-sm text-muted-foreground/70 mb-4 inline-flex items-center">
-                          <Calendar className="w-3 h-3 mr-1 text-accent-foreground" />
+                        </span>
+                        <span className="inline-flex items-center text-xs text-muted-foreground/80">
+                          <Calendar className="w-3.5 h-3.5 mr-1.5 text-accent-foreground" />
                           {exp.date_range}
-                        </p>
-                        <p className="text-sm text-muted-foreground/80 line-clamp-3">{exp.description}</p>
+                        </span>
                       </div>
+
+                      <h3 className="font-bold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">
+                        {roleTitle}
+                      </h3>
+
+                      <p className="text-sm text-muted-foreground/90 leading-relaxed mb-4">
+                        {exp.description}
+                      </p>
                     </div>
+
+                    {/* Tech tags if present */}
+                    {exp.technologies && exp.technologies.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-3 border-t border-border/60">
+                        {exp.technologies.map((tech, tIdx) => (
+                          <span
+                            key={tIdx}
+                            className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted/60 text-muted-foreground border border-border/50"
+                          >
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })
             ) : (
               <div className="col-span-2 text-center py-12">
-                <div className="bg-card rounded-xl border border-border p-8">
+                <div className="bg-card rounded-2xl border border-border p-8">
                   <Briefcase className="h-12 w-12 mx-auto mb-4 text-primary/30" />
                   <p className="text-muted-foreground font-medium">Experience information is currently unavailable.</p>
                 </div>
@@ -330,405 +376,289 @@ export default async function Home() {
             )}
           </div>
           
-          <div className="text-center mt-14">
-            <Button asChild variant="outline" className="group rounded-full border-accent-foreground text-accent-foreground hover:bg-accent-foreground/10 hover:border-accent-foreground">
+          <div className="text-center mt-12">
+            <Button asChild variant="outline" className="rounded-full border-accent-foreground text-accent-foreground hover:bg-accent-foreground/10 hover:border-accent-foreground shadow-sm">
               <Link href="/about">
-                View Full Experience
-                <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                <span>View Full Career Roadmap</span>
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Skills Overview with theme-aware styling */}
-      <section className="py-12 md:py-16 bg-background dark:bg-[#0a0f2a]">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col items-center mb-14">
-            <div className="inline-flex items-center justify-center p-1 px-3 mb-5 border border-accent-foreground/30 rounded-full bg-accent-foreground/5 text-accent-foreground text-sm font-medium">
-              <Code className="w-4 h-4 mr-2" />
-              Expertise
+      {/* 
+        ========================================================================
+        REPLACING OLD "SKILLS & TECHNOLOGIES" (which user identified as space filler)
+        WITH FEATURED PRODUCTION SYSTEMS & LIVE WORKS SHOWCASE
+        ========================================================================
+      */}
+      <section className="py-14 md:py-20 bg-background dark:bg-[#0a0f2a] relative overflow-hidden">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="flex flex-col items-center mb-14 text-center">
+            <div className="inline-flex items-center justify-center gap-2 px-3 py-1 mb-4 border border-primary/30 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wider uppercase">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Production Deliverables</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-center text-foreground mb-8">
-              Skills & Technologies
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+              Featured Systems & Applications
             </h2>
-            <div className="w-20 h-1 bg-accent-foreground rounded-full"></div>
+            <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-2xl">
+              Real-world systems shipped across mobile, containerized cloud microservices, and interactive web platforms.
+            </p>
+            <div className="w-16 h-1 bg-primary rounded-full mt-4"></div>
           </div>
-          
-          <div className="max-w-5xl mx-auto">
-            {/* Modern skills showcase */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-              {/* Technical Skills - Takes up more space */}
-              <div className="md:col-span-7 bg-gradient-to-br from-card to-card/80 rounded-2xl shadow-lg border border-border/40 overflow-hidden group hover:border-primary/30 transition-all duration-300 relative">
-                {/* Floating Tech Icons */}
-                <div className="absolute inset-0 overflow-hidden opacity-10 pointer-events-none">
-                  <div className="absolute top-5 left-10 w-12 h-12 animate-float animation-delay-2000">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="text-primary w-full h-full"><path d="M0 0h24v24H0V0z" fill="none"/><path fill="currentColor" d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
-                  </div>
-                  <div className="absolute top-20 right-10 w-10 h-10 animate-float animation-delay-3000">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="text-accent-foreground w-full h-full"><path fill="none" d="M0 0h24v24H0z"/><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-                  </div>
-                  <div className="absolute bottom-10 left-20 w-8 h-8 animate-float animation-delay-4000">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="text-[#6370ff] w-full h-full"><path fill="none" d="M0 0h24v24H0z"/><path fill="currentColor" d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
-                  </div>
-                  <div className="absolute top-40 right-40 w-14 h-14 animate-float animation-delay-1000">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="text-emerald-500 w-full h-full"><path fill="none" d="M0 0h24v24H0z"/><path fill="currentColor" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H4v-4h11v4zm0-5H4V9h11v4zm5 5h-4V9h4v9z"/></svg>
-                  </div>
-                  <div className="absolute bottom-20 right-20 w-9 h-9 animate-float animation-delay-5000">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="text-purple-500 w-full h-full"><path fill="none" d="M0 0h24v24H0z"/><path fill="currentColor" d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
-                  </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* Project 1: CareNest */}
+            <div className="group rounded-3xl border border-border/80 bg-card/90 overflow-hidden shadow-lg hover:shadow-2xl hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
+              <div>
+                <div className="relative h-48 w-full bg-card/50 overflow-hidden border-b border-border/60 flex items-center justify-center">
+                  <img
+                    src="/images/projects/carenest.png"
+                    alt="CareNest App"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <span className="absolute bottom-3 left-3 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/90 text-white shadow-sm">
+                    Live on Google Play
+                  </span>
                 </div>
-
-                <div className="p-6 md:p-8">
-                  <div className="flex items-center mb-6">
-                    <div className="w-12 h-12 rounded-xl bg-primary/20 text-primary flex items-center justify-center shadow-sm mr-4 group-hover:scale-110 transition-transform duration-300">
-                      <Code className="w-6 h-6" />
-                    </div>
-                    <h3 className="text-xl font-bold text-foreground">Technical Skills</h3>
-                  </div>
-                  
-                  <div className="space-y-5">
-                    {/* Mobile Development */}
-                    <div className="space-y-3">
-                      <h4 className="text-md font-semibold text-foreground/90 border-l-2 border-indigo-500 pl-3">Mobile Development</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {skills && ('technical' in skills) && Array.isArray(skills.technical) ?
-                          skills.technical.filter(skill => 
-                            ['flutter', 'kotlin', 'android', 'ios', 'mobile', 'dart'].some(
-                              tech => skill.toLowerCase().includes(tech.toLowerCase())
-                            )
-                          ).slice(0, 6).map((skill, idx) => (
-                            <span key={idx} className="px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-500 border border-indigo-500/30 rounded-full text-sm font-medium transition-all hover:scale-105">
-                              {skill}
-                            </span>
-                          )) : null
-                        }
-                      </div>
-                    </div>
-
-                    {/* Frontend Development */}
-                    <div className="space-y-3">
-                      <h4 className="text-md font-semibold text-foreground/90 border-l-2 border-primary pl-3">Frontend Development</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {skills && ('technical' in skills) && Array.isArray(skills.technical) ?
-                          skills.technical.filter(skill => 
-                            ['javascript', 'react', 'next', 'vue', 'html', 'css', 'typescript', 'angular', 'ui', 'frontend', 'jsx', 'web', 'dom', 'responsive', 'scss', 'sass', 'xml'].some(
-                              tech => skill.toLowerCase().includes(tech.toLowerCase())
-                            )
-                          ).slice(0, 6).map((skill, idx) => (
-                            <span key={idx} className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-full text-sm font-medium transition-all hover:scale-105">
-                              {skill}
-                            </span>
-                          )) : null
-                        }
-                      </div>
-                    </div>
-                    
-                    {/* Backend Development */}
-                    <div className="space-y-3">
-                      <h4 className="text-md font-semibold text-foreground/90 border-l-2 border-accent-foreground pl-3">Backend Development</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {skills && ('technical' in skills) && Array.isArray(skills.technical) ?
-                          skills.technical.filter(skill => 
-                            ['node', 'express', 'django', 'python', 'java', 'php', 'api', 'graphql', 'rest', 'backend', 'flask', 'server', 'fastapi', 'spring', 'ruby', 'c#', 'c++', 'core java'].some(
-                              tech => skill.toLowerCase().includes(tech.toLowerCase())
-                            )
-                          ).slice(0, 6).map((skill, idx) => (
-                            <span key={idx} className="px-3 py-1.5 bg-accent-foreground/10 hover:bg-accent-foreground/20 text-accent-foreground border border-accent-foreground/30 rounded-full text-sm font-medium transition-all hover:scale-105">
-                              {skill}
-                            </span>
-                          )) : null
-                        }
-                      </div>
-                    </div>
-                    
-                    {/* Databases & Tools */}
-                    <div className="space-y-3">
-                      <h4 className="text-md font-semibold text-foreground/90 border-l-2 border-[#6370ff] pl-3">Databases & Tools</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {skills && ('technical' in skills) && Array.isArray(skills.technical) ?
-                          skills.technical.filter(skill => 
-                            ['sql', 'mongodb', 'postgres', 'mysql', 'firebase', 'database', 'db', 'query', 'orm', 'nosql', 'redis', 'elasticsearch'].some(
-                              tech => skill.toLowerCase().includes(tech.toLowerCase())
-                            )
-                          ).slice(0, 5).map((skill, idx) => (
-                            <span key={idx} className="px-3 py-1.5 bg-[#6370ff]/10 hover:bg-[#6370ff]/20 text-[#6370ff] border border-[#6370ff]/30 rounded-full text-sm font-medium transition-all hover:scale-105">
-                              {skill}
-                            </span>
-                          )) : null
-                        }
-                      </div>
-                    </div>
-                    
-                    {/* DevOps & Cloud */}
-                    <div className="space-y-3">
-                      <h4 className="text-md font-semibold text-foreground/90 border-l-2 border-emerald-500 pl-3">DevOps & Cloud</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {skills && ('technical' in skills) && Array.isArray(skills.technical) ?
-                          skills.technical.filter(skill => 
-                            ['aws', 'azure', 'gcp', 'cloud', 'docker', 'kubernetes', 'jenkins', 'ci', 'cd', 'git', 'devops', 'github', 'gitlab', 'bitbucket', 'terraform', 'infrastructure', 'deploy'].some(
-                              tech => skill.toLowerCase().includes(tech.toLowerCase())
-                            )
-                          ).slice(0, 6).map((skill, idx) => (
-                            <span key={idx} className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 rounded-full text-sm font-medium transition-all hover:scale-105">
-                              {skill}
-                            </span>
-                          )) : null
-                        }
-                      </div>
-                    </div>
-                    
-                    {/* AI & ML */}
-                    <div className="space-y-3">
-                      <h4 className="text-md font-semibold text-foreground/90 border-l-2 border-purple-500 pl-3">AI & Machine Learning</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {skills && ('technical' in skills) && Array.isArray(skills.technical) ?
-                          skills.technical.filter(skill => 
-                            ['ai', 'ml', 'machine learning', 'deep learning', 'tensorflow', 'pytorch', 'nlp', 'neural', 'gpt', 'generative ai', 'responsible ai', 'chatgpt', 'data science', 'opencv', 'computer vision', 'llm'].some(
-                              tech => skill.toLowerCase().includes(tech.toLowerCase())
-                            )
-                          ).slice(0, 5).map((skill, idx) => (
-                            <span key={idx} className="px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-500 border border-purple-500/30 rounded-full text-sm font-medium transition-all hover:scale-105">
-                              {skill}
-                            </span>
-                          )) : null
-                        }
-                      </div>
-                    </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+                    CareNest
+                  </h3>
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                    Care management and automated invoicing platform for Australian NDIS disability support providers. Features multi-tenant architecture, scheduling, shift notes, and bulk invoicing.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 mt-4">
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">Flutter</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">Kotlin</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">Firebase</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">Cloud Run</span>
                   </div>
                 </div>
               </div>
-              
-              {/* Soft Skills & Additional Info */}
-              <div className="md:col-span-5 space-y-6">
-                {/* Soft Skills with new design */}
-                <div className="bg-gradient-to-br from-card to-card/80 rounded-2xl shadow-lg border border-border/40 p-6 md:p-8 group hover:border-accent-foreground/30 transition-all duration-300">
-                  <div className="flex items-center mb-6">
-                    <div className="w-12 h-12 rounded-xl bg-accent-foreground/10 text-accent-foreground flex items-center justify-center shadow-sm mr-4 group-hover:scale-110 transition-transform duration-300">
-                      <UserRound className="w-6 h-6" />
-                    </div>
-                    <h3 className="text-xl font-bold text-foreground">Soft Skills</h3>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    {skills && ('soft' in skills) && Array.isArray(skills.soft) && skills.soft.length > 0 ? (
-                      skills.soft.slice(0, 6).map((skill, index) => (
-                        <div key={index} className="flex items-center gap-3 group/skill p-2 hover:bg-accent-foreground/5 rounded-lg transition-colors">
-                          <div className="w-2 h-2 rounded-full bg-accent-foreground group-hover/skill:scale-125 transition-transform"></div>
-                          <p className="text-muted-foreground group-hover/skill:text-foreground transition-colors">{skill}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <div>
-                        {/* Default soft skills when none are provided */}
-                        {['Problem Solving', 'Communication', 'Team Collaboration', 'Critical Thinking', 'Time Management', 'Adaptability'].map((skill, index) => (
-                          <div key={index} className="flex items-center gap-3 group/skill p-2 hover:bg-accent-foreground/5 rounded-lg transition-colors">
-                            <div className="w-2 h-2 rounded-full bg-accent-foreground group-hover/skill:scale-125 transition-transform"></div>
-                            <p className="text-muted-foreground group-hover/skill:text-foreground transition-colors">{skill}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Experience Level Indicator - Calculate from experience data */}
-                <div className="bg-gradient-to-br from-card to-card/80 rounded-2xl shadow-lg border border-border/40 p-6 md:p-8 group hover:border-primary/30 transition-all duration-300">
-                  <h3 className="text-lg font-bold text-foreground mb-4">Years of Experience</h3>
-                  <div className="space-y-4">
-                    {experience && experience.length > 0 ? (
-                      <>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Frontend Development</span>
-                            <span className="text-primary font-medium">
-                              {(() => {
-                                // Calculate years for frontend
-                                const frontendYears = experience
-                                  .filter(exp => 
-                                    exp.title?.toLowerCase().includes('frontend') || 
-                                    exp.title?.toLowerCase().includes('web') ||
-                                    exp.description?.toLowerCase().includes('frontend') ||
-                                    (exp.technologies && Array.isArray(exp.technologies) && exp.technologies.some(tech => 
-                                      ['javascript', 'react', 'html', 'css', 'ui', 'frontend'].some(t => 
-                                        tech.toLowerCase().includes(t)
-                                      )
-                                    ))
-                                  )
-                                  .reduce((years, exp) => {
-                                    if (!exp.date_range) return years;
-                                    const match = exp.date_range.match(/(\d{4})/g);
-                                    if (match && match.length >= 1) {
-                                      const startYear = parseInt(match[0]);
-                                      const endYear = match.length > 1 && match[1] !== 'Present' 
-                                        ? parseInt(match[1]) 
-                                        : new Date().getFullYear();
-                                      return years + (endYear - startYear);
-                                    }
-                                    return years;
-                                  }, 0);
-                                return frontendYears > 0 ? frontendYears : 5;
-                              })()}+ Years
-                            </span>
-                          </div>
-                          <div className="h-2 bg-background rounded-full overflow-hidden">
-                            <div className="h-full bg-primary rounded-full" style={{ width: '90%' }}></div>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Backend Development</span>
-                            <span className="text-accent-foreground font-medium">
-                              {(() => {
-                                // Calculate years for backend
-                                const backendYears = experience
-                                  .filter(exp => 
-                                    exp.title?.toLowerCase().includes('backend') || 
-                                    exp.description?.toLowerCase().includes('backend') ||
-                                    (exp.technologies && Array.isArray(exp.technologies) && exp.technologies.some(tech => 
-                                      ['node', 'python', 'api', 'backend', 'server', 'java', 'php', 'flask', 'django'].some(t => 
-                                        tech.toLowerCase().includes(t)
-                                      )
-                                    ))
-                                  )
-                                  .reduce((years, exp) => {
-                                    if (!exp.date_range) return years;
-                                    const match = exp.date_range.match(/(\d{4})/g);
-                                    if (match && match.length >= 1) {
-                                      const startYear = parseInt(match[0]);
-                                      const endYear = match.length > 1 && match[1] !== 'Present'
-                                        ? parseInt(match[1]) 
-                                        : new Date().getFullYear();
-                                      return years + (endYear - startYear);
-                                    }
-                                    return years;
-                                  }, 0);
-                                return backendYears > 0 ? backendYears : 4;
-                              })()}+ Years
-                            </span>
-                          </div>
-                          <div className="h-2 bg-background rounded-full overflow-hidden">
-                            <div className="h-full bg-accent-foreground rounded-full" style={{ width: '80%' }}></div>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">DevOps & Cloud</span>
-                            <span className="text-[#6370ff] font-medium">
-                              {(() => {
-                                // Calculate years for devops
-                                const devopsYears = experience
-                                  .filter(exp => 
-                                    exp.title?.toLowerCase().includes('devops') || 
-                                    exp.title?.toLowerCase().includes('cloud') || 
-                                    exp.description?.toLowerCase().includes('devops') ||
-                                    exp.description?.toLowerCase().includes('cloud') ||
-                                    (exp.technologies && Array.isArray(exp.technologies) && exp.technologies.some(tech => 
-                                      ['aws', 'docker', 'kubernetes', 'cicd', 'devops', 'cloud', 'jenkins', 'git'].some(t => 
-                                        tech.toLowerCase().includes(t)
-                                      )
-                                    ))
-                                  )
-                                  .reduce((years, exp) => {
-                                    if (!exp.date_range) return years;
-                                    const match = exp.date_range.match(/(\d{4})/g);
-                                    if (match && match.length >= 1) {
-                                      const startYear = parseInt(match[0]);
-                                      const endYear = match.length > 1 && match[1] !== 'Present'
-                                        ? parseInt(match[1]) 
-                                        : new Date().getFullYear();
-                                      return years + (endYear - startYear);
-                                    }
-                                    return years;
-                                  }, 0);
-                                return devopsYears > 0 ? devopsYears : 3;
-                              })()}+ Years
-                            </span>
-                          </div>
-                          <div className="h-2 bg-background rounded-full overflow-hidden">
-                            <div className="h-full bg-[#6370ff] rounded-full" style={{ width: '70%' }}></div>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Frontend Development</span>
-                            <span className="text-primary font-medium">5+ Years</span>
-                          </div>
-                          <div className="h-2 bg-background rounded-full overflow-hidden">
-                            <div className="h-full bg-primary rounded-full" style={{ width: '90%' }}></div>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Backend Development</span>
-                            <span className="text-accent-foreground font-medium">4+ Years</span>
-                          </div>
-                          <div className="h-2 bg-background rounded-full overflow-hidden">
-                            <div className="h-full bg-accent-foreground rounded-full" style={{ width: '80%' }}></div>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">DevOps & Cloud</span>
-                            <span className="text-[#6370ff] font-medium">3+ Years</span>
-                          </div>
-                          <div className="h-2 bg-background rounded-full overflow-hidden">
-                            <div className="h-full bg-[#6370ff] rounded-full" style={{ width: '70%' }}></div>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
+
+              <div className="p-6 pt-0 flex items-center justify-between border-t border-border/50 mt-4">
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.bishal.invoice&pcampaignid=web_share"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 hover:underline"
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>Google Play Store</span>
+                </a>
+                <a
+                  href="https://github.com/ErBishalBudhathoki/CareNest"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-full border border-border hover:border-primary/40 text-foreground transition-colors"
+                  aria-label="GitHub Repository"
+                >
+                  <Github className="w-4 h-4" />
+                </a>
               </div>
             </div>
-            
-            <div className="text-center mt-14">
-              <Button asChild variant="outline" className="group rounded-full border-accent-foreground text-accent-foreground hover:bg-accent-foreground/10 hover:border-accent-foreground">
-                <Link href="/skills">
-                  Explore All Skills
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+
+            {/* Project 2: Chess With Knight */}
+            <div className="group rounded-3xl border border-border/80 bg-card/90 overflow-hidden shadow-lg hover:shadow-2xl hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
+              <div>
+                <div className="relative h-48 w-full bg-card/50 overflow-hidden border-b border-border/60 flex items-center justify-center">
+                  <img
+                    src="/images/projects/chess-knight.png"
+                    alt="Chess With Knight"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <span className="absolute bottom-3 left-3 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-purple-500/90 text-white shadow-sm">
+                    Live Dokploy Web Game
+                  </span>
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+                    Chess With Knight
+                  </h3>
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                    Interactive 8x8 chessboard strategy web game with randomly generated knight moves, heuristic pathfinding, and custom puzzle mechanics, hosted on Dokploy server.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 mt-4">
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">Java</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">Algorithms</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">Docker</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">Web</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 pt-0 flex items-center justify-between border-t border-border/50 mt-4">
+                <a
+                  href="https://dokploy.bishalbudhathoki.com/chessknight"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Play Live Game</span>
+                </a>
+                <a
+                  href="https://github.com/ErBishalBudhathoki/Chess-with-Knight"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-full border border-border hover:border-primary/40 text-foreground transition-colors"
+                  aria-label="GitHub Repository"
+                >
+                  <Github className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+
+            {/* Project 3: Tenant-Web-App (Hamro Ghar) */}
+            <div className="group rounded-3xl border border-border/80 bg-card/90 overflow-hidden shadow-lg hover:shadow-2xl hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
+              <div>
+                <div className="relative h-48 w-full bg-card/50 overflow-hidden border-b border-border/60 flex items-center justify-center">
+                  <img
+                    src="/images/projects/hamro-ghar.png"
+                    alt="Hamro Ghar"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <span className="absolute bottom-3 left-3 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-teal-500/90 text-white shadow-sm">
+                    Full-Stack Web App
+                  </span>
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+                    Tenant-Web-App (Hamro Ghar)
+                  </h3>
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                    Full-stack rental management web application helping tenants and landlords manage room listings, leases, rent tracking, and maintenance requests.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 mt-4">
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20">React</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20">Node.js</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20">Express</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20">MongoDB</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 pt-0 flex items-center justify-between border-t border-border/50 mt-4">
+                <Link
+                  href="/projects"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+                >
+                  <span>Inspect Details</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
-              </Button>
+                <a
+                  href="https://github.com/ErBishalBudhathoki/Tenant-Web-App"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-full border border-border hover:border-primary/40 text-foreground transition-colors"
+                  aria-label="GitHub Repository"
+                >
+                  <Github className="w-4 h-4" />
+                </a>
+              </div>
             </div>
+
+            {/* Project 4: Don't Fall Game */}
+            <div className="group rounded-3xl border border-border/80 bg-card/90 overflow-hidden shadow-lg hover:shadow-2xl hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
+              <div>
+                <div className="relative h-48 w-full bg-card/50 overflow-hidden border-b border-border/60 flex items-center justify-center">
+                  <img
+                    src="/images/projects/dont-fall.png"
+                    alt="Don't Fall Game"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <span className="absolute bottom-3 left-3 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-pink-500/90 text-white shadow-sm">
+                    3D Unity Game
+                  </span>
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+                    Don't Fall Game
+                  </h3>
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                    3D physics balance and platform game built in Unity for Android and PC with obstacle courses, gyroscopic balance, and interactive level mechanics.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 mt-4">
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20">Unity</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20">C#</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20">Android</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20">3D Physics</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 pt-0 flex items-center justify-between border-t border-border/50 mt-4">
+                <Link
+                  href="/projects"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+                >
+                  <span>Inspect Details</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+                <a
+                  href="https://github.com/ErBishalBudhathoki/Dont-Fall-Game"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-full border border-border hover:border-primary/40 text-foreground transition-colors"
+                  aria-label="GitHub Repository"
+                >
+                  <Github className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-12">
+            <Button asChild size="lg" className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-xl transition-all">
+              <Link href="/projects">
+                <span>View All 8+ Engineering Projects</span>
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
 
-      {/* Modern CTA section with theme-aware background */}
-      <section className="py-12 md:py-16 relative overflow-hidden bg-gradient-to-b from-background to-background dark:from-[#0a0f2a] dark:to-[#131c48]">
+      {/* 
+        ========================================================================
+        Modern CTA section
+        ========================================================================
+      */}
+      <section className="py-14 md:py-20 relative overflow-hidden bg-gradient-to-b from-background to-background dark:from-[#0a0f2a] dark:to-[#131c48]">
         <div className="absolute inset-0 z-0 opacity-20">
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary rounded-full filter blur-3xl"></div>
           <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-accent-foreground rounded-full filter blur-3xl"></div>
         </div>
         
-        <div className="container relative z-10 mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center justify-center p-1 px-3 mb-5 border border-accent-foreground/30 rounded-full bg-accent-foreground/5 text-accent-foreground text-sm font-medium">
-              Let's Connect
+        <div className="container relative z-10 mx-auto px-4 max-w-4xl">
+          <div className="bg-card/70 backdrop-blur-md border border-border/80 rounded-3xl p-8 sm:p-12 text-center shadow-xl">
+            <div className="inline-flex items-center justify-center p-1 px-3 mb-5 border border-accent-foreground/30 rounded-full bg-accent-foreground/5 text-accent-foreground text-xs font-semibold tracking-wider uppercase">
+              Let&apos;s Connect
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-foreground">
-              Let's Create Something Amazing Together
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground tracking-tight">
+              Let&apos;s Create Something Impactful Together
             </h2>
-            <p className="mb-8 text-muted-foreground max-w-2xl mx-auto">
-              I'm always open to discussing new projects, creative ideas, or opportunities to be part of your vision.
+            <p className="mb-8 text-muted-foreground text-base max-w-2xl mx-auto leading-relaxed">
+              Available for full-time software engineering roles in Sydney and remote contracts. Let&apos;s discuss how I can contribute to your engineering team.
             </p>
-            <div className="flex flex-wrap gap-5 justify-center">
-              <Button asChild className="rounded-full bg-accent-foreground hover:bg-accent-foreground/90 text-background shadow-md shadow-accent-foreground/20 hover:shadow-lg transition-all">
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Button asChild size="lg" className="rounded-full bg-accent-foreground hover:bg-accent-foreground/90 text-background shadow-md shadow-accent-foreground/20 hover:shadow-lg transition-all font-semibold">
                 <Link href="/contact">
+                  <UserRound className="w-4 h-4 mr-2" />
                   Get In Touch
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="rounded-full border-primary hover:border-primary text-primary hover:bg-primary/10 transition-all">
+              <Button asChild variant="outline" size="lg" className="rounded-full border-primary/50 hover:border-primary text-foreground hover:bg-primary/10 transition-all font-semibold">
                 <Link href="/projects">
-                  View My Projects
+                  <Code className="w-4 h-4 mr-2" />
+                  Explore Projects
                 </Link>
               </Button>
             </div>

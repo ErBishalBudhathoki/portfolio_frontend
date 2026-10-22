@@ -21,6 +21,7 @@ import {
   Layers,
   ArrowRight,
   Info,
+  Play,
 } from 'lucide-react';
 import { FALLBACK_PROFILE_DATA } from '@/lib/fallback-data';
 import { useApi } from '@/hooks/useApi';
@@ -36,6 +37,7 @@ interface Project {
   live_demo?: string;
   image?: string;
   technologies?: string[];
+  category?: string;
 }
 
 interface ProfileApiResponse {
@@ -82,6 +84,15 @@ function getProjectVisual(title: string) {
       category: 'games',
     };
   }
+  if (lower.includes('nidhi') || lower.includes('browser')) {
+    return {
+      Icon: Smartphone,
+      gradient: 'from-teal-500/25 via-cyan-500/10 to-transparent',
+      badge: 'Android Web Browser',
+      accentColor: 'text-teal-400',
+      category: 'mobile',
+    };
+  }
   if (lower.includes('timetable') || lower.includes('schedule')) {
     return {
       Icon: Calendar,
@@ -110,6 +121,38 @@ function getProjectVisual(title: string) {
   };
 }
 
+function getProjectImagesAndLinks(project: Project) {
+  const title = (project.title || project.name || '').toLowerCase();
+  let image = project.image;
+  let live_demo = project.live_demo;
+  let repository = project.repository || (project.url?.includes('github.com') ? project.url : undefined);
+
+  if (title.includes('care') || title.includes('nest')) {
+    image = image || '/images/projects/carenest.png';
+    live_demo = live_demo || 'https://play.google.com/store/apps/details?id=com.bishal.invoice&pcampaignid=web_share';
+    repository = repository || 'https://github.com/ErBishalBudhathoki/CareNest';
+  } else if (title.includes('chess') || title.includes('knight')) {
+    image = image || '/images/projects/chess-knight.png';
+    live_demo = 'https://dokploy.bishalbudhathoki.com/chessknight';
+    repository = repository || 'https://github.com/ErBishalBudhathoki/Chess-with-Knight';
+  } else if (title.includes('fall')) {
+    image = image || '/images/projects/dont-fall.png';
+    repository = repository || 'https://github.com/ErBishalBudhathoki/Dont-Fall-Game';
+  } else if (title.includes('nidhi') || title.includes('browser')) {
+    image = image || '/images/projects/nidhi-browser.png';
+    repository = repository || 'https://github.com/ErBishalBudhathoki/Nidhi-The-Browser';
+  } else if (title.includes('tenant') || title.includes('ghar')) {
+    image = image || '/images/projects/hamro-ghar.png';
+    repository = repository || 'https://github.com/ErBishalBudhathoki/Tenant-Web-App';
+  } else if (title.includes('invoice')) {
+    repository = repository || 'https://github.com/ErBishalBudhathoki/Invoice-Generator';
+  } else if (title.includes('timetable')) {
+    repository = repository || 'https://github.com/ErBishalBudhathoki/Automatic-Timetable-Generation';
+  }
+
+  return { image, live_demo, repository };
+}
+
 function extractTech(project: Project): string[] {
   if (project.technologies && project.technologies.length > 0) {
     return project.technologies;
@@ -118,9 +161,134 @@ function extractTech(project: Project): string[] {
   const candidates = [
     'Flutter', 'Kotlin', 'Android', 'iOS', 'React', 'Next.js', 'Node.js',
     'Express', 'MongoDB', 'Java', 'Python', 'FastAPI', 'Firebase', 'Cloud Run',
-    'Unity', 'C#', 'Genetic Algorithms', 'Docker', 'PostgreSQL',
+    'Unity', 'C#', 'Genetic Algorithms', 'Docker', 'PostgreSQL', 'WebKit'
   ];
   return candidates.filter((tech) => desc.includes(tech.toLowerCase()));
+}
+
+interface ProjectCardProps {
+  project: Project;
+  index: number;
+  onOpenModal: (project: Project) => void;
+}
+
+function ProjectCardItem({ project, index, onOpenModal }: ProjectCardProps) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const title = project.title || project.name || 'Project';
+  const visual = getProjectVisual(title);
+  const Icon = visual.Icon;
+  const { image, live_demo, repository } = getProjectImagesAndLinks(project);
+
+  return (
+    <Card className="group flex flex-col overflow-hidden rounded-3xl border border-border/70 bg-card/90 shadow-lg hover:shadow-2xl hover:border-primary/40 transition-all duration-300 hover:-translate-y-1.5">
+      {/* Media Header: Real Image Preview with Monogram/Icon Fallback */}
+      <div
+        className="relative h-48 w-full overflow-hidden border-b border-border/60 bg-muted/40 cursor-pointer group/img"
+        onClick={() => onOpenModal(project)}
+      >
+        {image && !imgFailed ? (
+          <div className="relative w-full h-full bg-card/50 flex items-center justify-center overflow-hidden">
+            <img
+              src={image}
+              alt={`${title} preview`}
+              loading="lazy"
+              onError={() => setImgFailed(true)}
+              className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
+            <span className="absolute bottom-3 left-3 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-background/85 text-foreground border border-border/70 backdrop-blur-md shadow-sm">
+              {visual.badge}
+            </span>
+          </div>
+        ) : (
+          <div className={`relative h-full w-full bg-gradient-to-br ${visual.gradient} flex items-center justify-center`}>
+            <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-15 pointer-events-none" />
+            <div className="relative z-10 flex flex-col items-center gap-2">
+              <div className="w-14 h-14 rounded-2xl border border-border/80 bg-background/85 shadow-md flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <Icon className={`w-7 h-7 ${visual.accentColor}`} />
+              </div>
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-background/70 border border-border/60 text-foreground/80 backdrop-blur-sm">
+                {visual.badge}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Card Body */}
+      <CardContent className="flex flex-1 flex-col p-6 space-y-4">
+        <div className="flex-1 space-y-2">
+          <h3
+            className="text-xl font-bold text-foreground group-hover:text-primary transition-colors cursor-pointer"
+            onClick={() => onOpenModal(project)}
+          >
+            {title}
+          </h3>
+          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+            {project.description}
+          </p>
+        </div>
+
+        {/* Tech Stack Pills */}
+        {project.technologies && project.technologies.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {project.technologies.slice(0, 4).map((tech, idx) => (
+              <span
+                key={idx}
+                className="px-2.5 py-0.5 rounded-full text-xs font-medium border border-border/60 bg-muted/50 text-muted-foreground"
+              >
+                {tech}
+              </span>
+            ))}
+            {project.technologies.length > 4 && (
+              <span className="text-xs text-muted-foreground/70 self-center">
+                +{project.technologies.length - 4}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Footer Actions */}
+        <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-2">
+          <button
+            onClick={() => onOpenModal(project)}
+            className="text-xs font-semibold text-primary hover:underline inline-flex items-center"
+          >
+            Details <ArrowRight className="w-3 h-3 ml-1" />
+          </button>
+
+          <div className="flex items-center gap-2">
+            {repository && (
+              <a
+                href={repository}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full border border-border/80 bg-background hover:bg-accent/20 text-foreground transition-colors"
+                aria-label="GitHub Repository"
+                title="View Repository"
+              >
+                <Github className="w-4 h-4" />
+              </a>
+            )}
+
+            {live_demo && (
+              <a
+                href={live_demo}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
+                aria-label="Live Demo"
+                title="Open Live Application"
+              >
+                <Play className="w-3 h-3 fill-current" />
+                <span>Live Demo</span>
+              </a>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function ProjectsPage() {
@@ -137,10 +305,14 @@ export default function ProjectsPage() {
     return raw.map((p) => {
       const title = p.title || p.name || 'Project';
       const visual = getProjectVisual(title);
+      const enriched = getProjectImagesAndLinks(p);
       return {
         ...p,
         title,
         name: title,
+        image: enriched.image || p.image,
+        live_demo: enriched.live_demo || p.live_demo,
+        repository: enriched.repository || p.repository,
         technologies: extractTech(p),
         category: visual.category,
       };
@@ -152,7 +324,6 @@ export default function ProjectsPage() {
     return allProjects.find((p) => p.title.toLowerCase().includes('care') || p.title.toLowerCase().includes('nest')) || allProjects[0];
   }, [allProjects]);
 
-  // Other projects (excluding the flagship spotlight if displayed separately)
   const filteredProjects = useMemo(() => {
     if (selectedCategory === 'all') {
       return allProjects;
@@ -208,7 +379,7 @@ export default function ProjectsPage() {
                   <div className="flex flex-wrap items-center gap-2.5">
                     <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 flex items-center gap-1.5">
                       <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-                      Live in Production
+                      Live on Google Play
                     </span>
                     <Badge variant="outline" className="border-border text-xs text-muted-foreground">
                       NDIS Healthcare SaaS
@@ -283,18 +454,25 @@ export default function ProjectsPage() {
                   </div>
                 </div>
 
-                {/* Visual Cover Preview */}
+                {/* Visual Cover Preview with Real Image */}
                 <div className="lg:col-span-5 flex justify-center">
-                  <div className="w-full max-w-sm aspect-square rounded-3xl border border-border/80 bg-gradient-to-br from-primary/20 via-background/80 to-accent/20 p-6 flex flex-col items-center justify-center text-center shadow-inner relative group/cover overflow-hidden">
-                    <div className="w-24 h-24 rounded-3xl bg-background border border-border/80 shadow-xl flex items-center justify-center mb-4 group-hover/cover:scale-105 transition-transform duration-300">
-                      <HeartHandshake className="w-12 h-12 text-primary" />
+                  <div className="w-full max-w-sm aspect-square rounded-3xl border border-border/80 bg-gradient-to-br from-primary/20 via-background/80 to-accent/20 p-6 flex flex-col items-center justify-center text-center shadow-2xl relative group/cover overflow-hidden">
+                    <div className="w-28 h-28 rounded-3xl bg-background border border-primary/30 shadow-xl overflow-hidden mb-4 group-hover/cover:scale-105 transition-transform duration-300 p-2 flex items-center justify-center">
+                      <img
+                        src="/images/projects/carenest.png"
+                        alt="CareNest App Icon"
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none';
+                        }}
+                      />
                     </div>
-                    <h3 className="text-lg font-bold text-foreground mb-1">CareNest Platform</h3>
-                    <p className="text-xs text-muted-foreground max-w-xs">
+                    <h3 className="text-xl font-bold text-foreground mb-1">CareNest Platform</h3>
+                    <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
                       Mobile timesheets, progress notes, and automated NDIS bulk invoicing engine
                     </p>
                     <div className="mt-4 inline-flex items-center text-xs font-semibold text-primary gap-1">
-                      Explore Architecture <ArrowRight className="w-3.5 h-3.5" />
+                      Multi-Tenant Architecture <ArrowRight className="w-3.5 h-3.5" />
                     </div>
                   </div>
                 </div>
@@ -326,108 +504,16 @@ export default function ProjectsPage() {
           })}
         </div>
 
-        {/* Project Grid */}
+        {/* Project Grid with Images */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-          {filteredProjects.map((project, index) => {
-            const visual = getProjectVisual(project.title);
-            const Icon = visual.Icon;
-            const repo = project.repository || (project.url?.includes('github.com') ? project.url : undefined);
-
-            return (
-              <Card
-                key={project.name || index}
-                className="group flex flex-col overflow-hidden rounded-3xl border border-border/70 bg-card/90 shadow-lg hover:shadow-2xl hover:border-primary/40 transition-all duration-300 hover:-translate-y-1.5"
-              >
-                {/* Media Header */}
-                <div
-                  className={`relative h-44 w-full overflow-hidden bg-gradient-to-br ${visual.gradient} border-b border-border/60 flex items-center justify-center cursor-pointer`}
-                  onClick={() => setActiveModalProject(project)}
-                >
-                  <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-15 pointer-events-none" />
-                  <div className="relative z-10 flex flex-col items-center gap-2">
-                    <div className="w-14 h-14 rounded-2xl border border-border/80 bg-background/85 shadow-md flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <Icon className={`w-7 h-7 ${visual.accentColor}`} />
-                    </div>
-                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-background/70 border border-border/60 text-foreground/80 backdrop-blur-sm">
-                      {visual.badge}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Card Body */}
-                <CardContent className="flex flex-1 flex-col p-6 space-y-4">
-                  <div className="flex-1 space-y-2">
-                    <h3
-                      className="text-xl font-bold text-foreground group-hover:text-primary transition-colors cursor-pointer"
-                      onClick={() => setActiveModalProject(project)}
-                    >
-                      {project.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-                      {project.description}
-                    </p>
-                  </div>
-
-                  {/* Tech Stack Pills */}
-                  {project.technologies && project.technologies.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {project.technologies.slice(0, 4).map((tech, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2.5 py-0.5 rounded-full text-xs font-medium border border-border/60 bg-muted/50 text-muted-foreground"
-                        >
-                          {tech}
-                        </span>
-                      ))}
-                      {project.technologies.length > 4 && (
-                        <span className="text-xs text-muted-foreground/70 self-center">
-                          +{project.technologies.length - 4}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Footer Actions */}
-                  <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-2">
-                    <button
-                      onClick={() => setActiveModalProject(project)}
-                      className="text-xs font-semibold text-primary hover:underline inline-flex items-center"
-                    >
-                      Inspect <ArrowRight className="w-3 h-3 ml-1" />
-                    </button>
-
-                    <div className="flex items-center gap-2">
-                      {repo && (
-                        <a
-                          href={repo}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 rounded-full border border-border/80 bg-background hover:bg-accent/20 text-foreground transition-colors"
-                          aria-label="GitHub Repository"
-                          title="View Repository"
-                        >
-                          <Github className="w-4 h-4" />
-                        </a>
-                      )}
-
-                      {project.live_demo && (
-                        <a
-                          href={project.live_demo}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                          aria-label="Live Demo"
-                          title="View Live Demo"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+          {filteredProjects.map((project, index) => (
+            <ProjectCardItem
+              key={project.name || index}
+              project={project}
+              index={index}
+              onOpenModal={(p) => setActiveModalProject(p)}
+            />
+          ))}
         </div>
       </div>
 
