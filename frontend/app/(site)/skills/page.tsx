@@ -867,153 +867,238 @@ export default async function SkillsPage() {
           )}
         </section>
 
-        <section className="mt-14">
-          <div className="mb-6 flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
-                  <Rocket className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium uppercase tracking-[0.26em] text-muted-foreground">Focus areas</p>
-                  <h2 className="text-2xl font-semibold text-foreground">The work grouped into clear engineering domains</h2>
-                </div>
-              </div>
-
-          <div className="grid gap-5 md:grid-cols-2">
-            {skillGroups.map((group) => {
-              const visual = getCategoryVisual(group.label);
-              const Icon = visual.icon;
-
-              return (
-                <article
-                  key={group.key}
-                  className="relative overflow-hidden rounded-[1.85rem] border border-border/70 bg-card/95 p-6 shadow-[0_18px_50px_rgba(20,24,62,0.06)]"
-                >
-                  <div className={`absolute inset-x-0 top-0 h-24 bg-gradient-to-r ${visual.accent}`} />
-                  <div className="relative">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <h3 className="text-xl font-semibold text-foreground">{group.label}</h3>
-                        <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                          {getCategoryDescription(group.label)}
-                        </p>
-                      </div>
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${visual.chip}`}>
-                        <Icon className="h-5 w-5" />
-                      </div>
-                    </div>
-
-                    <div className="mt-6 flex flex-wrap gap-2.5">
-                      {group.skills.map((skill, index) => (
-                        <span
-                          key={`${group.key}-${skill.name}`}
-                          className={`rounded-full border px-3 py-1.5 text-sm shadow-sm ${
-                            index < 4
-                              ? "border-border/70 bg-background/90 text-foreground"
-                              : "border-border/60 bg-background/65 text-muted-foreground"
-                          }`}
-                        >
-                          {skill.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="mt-14 grid gap-6 lg:grid-cols-[1.08fr,0.92fr]">
-          <article className="relative overflow-hidden rounded-[1.85rem] border border-border/70 bg-card/95 p-6 shadow-[0_18px_50px_rgba(20,24,62,0.06)]">
-            <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-primary/12 via-primary/6 to-transparent" />
-            <div className="relative">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
-                  <Code2 className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium uppercase tracking-[0.26em] text-muted-foreground">Proof of work</p>
-                  <h2 className="text-2xl font-semibold text-foreground">Recent experience</h2>
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                {recentExperience.map((item, index) => (
-                  <div
-                    key={`${item.title || item.role || "role"}-${index}`}
-                    className="rounded-2xl border border-border/70 bg-background/85 p-4 shadow-sm"
-                  >
-                    <p className="text-lg font-medium text-foreground">{item.title || item.role || "Software Role"}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {formatCompany(item.company) || "Company unavailable"}
-                      {item.date_range ? ` · ${item.date_range}` : ""}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </article>
-
-          <article className="relative overflow-hidden rounded-[1.85rem] border border-border/70 bg-card/95 p-6 shadow-[0_18px_50px_rgba(20,24,62,0.06)]">
-            <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-accent/90 via-accent/45 to-transparent dark:from-accent/30 dark:via-accent/10" />
-            <div className="relative">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-accent-foreground/20 bg-accent/60 text-accent-foreground">
-                  <ArrowRight className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium uppercase tracking-[0.26em] text-muted-foreground">Selected builds</p>
-                  <h2 className="text-2xl font-semibold text-foreground">Projects that support the skill profile</h2>
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                {featuredProjects.map((project, index) => {
-                  const title = project.name || project.title || `Project ${index + 1}`;
-
-                  return (
-                    <div
-                      key={`${title}-${index}`}
-                      className="rounded-2xl border border-border/70 bg-background/85 p-4 shadow-sm"
-                    >
-                      <p className="text-lg font-medium text-foreground">{title}</p>
-                      <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                        {project.description || "Project description unavailable."}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </article>
-        </section>
-
-        <section className="mt-14 relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/95 p-6 shadow-[0_18px_50px_rgba(20,24,62,0.06)] sm:p-8">
-          <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-primary/10 via-transparent to-accent/60 dark:from-primary/16 dark:to-accent/15" />
-          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-sm font-medium uppercase tracking-[0.26em] text-muted-foreground">Working style</p>
-              <h2 className="text-2xl font-semibold text-foreground">How the profile is framed</h2>
+        {/* Interactive Engineering Domains & Capability Matrix */}
+        <section className="mt-16 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border/60 pb-6">
+            <div className="space-y-2">
+              <Badge className="px-3.5 py-1 text-xs font-semibold uppercase tracking-wider rounded-full border border-primary/30 bg-primary/10 text-primary">
+                Technical Stack
+              </Badge>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+                Domain Proficiencies & Shipped Implementations
+              </h2>
+              <p className="text-sm sm:text-base text-muted-foreground max-w-2xl">
+                How technical skills are organized into coherent engineering disciplines and backed by production deliverables.
+              </p>
             </div>
             <Link
               href="/projects"
-              className="inline-flex items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-primary/80"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline shrink-0"
             >
-              See related projects
-              <ArrowRight className="h-4 w-4" />
+              Explore Project Implementations <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
-          <div className="mt-8 grid gap-6 md:grid-cols-3">
-            {[
-              "Focus on areas of real delivery rather than generic scoring.",
-              "Show tools as part of grouped practice, not isolated buzzwords.",
-              "Use projects and experience as the proof behind the stack.",
-            ].map((item) => (
-              <div key={item} className="rounded-2xl border border-border/70 bg-background/85 p-5 shadow-sm">
-                <p className="text-lg font-medium text-foreground">{item}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Domain 1: Mobile */}
+            <article className="relative overflow-hidden rounded-3xl border border-border/70 bg-card/90 p-7 shadow-lg hover:border-primary/40 transition-all duration-300 group">
+              <div className="flex items-center gap-3.5 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 text-indigo-500 border border-indigo-500/30 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                  <Smartphone className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">Mobile App Engineering</h3>
+                  <p className="text-xs text-muted-foreground">Flutter • Kotlin • Android • iOS</p>
+                </div>
               </div>
-            ))}
+
+              <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+                End-to-end mobile engineering with Flutter cross-platform architecture and native Android Kotlin lifecycle management. Designed reactive UI systems, background tasks, and real-time offline synchronization.
+              </p>
+
+              <div className="space-y-3 pt-3 border-t border-border/60">
+                <div className="text-xs">
+                  <span className="font-semibold text-foreground">Primary Deliverable: </span>
+                  <span className="text-primary font-medium">CareNest NDIS Mobile Platform (Google Play)</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {['Flutter', 'Dart', 'Kotlin', 'Android SDK', 'Android Studio', 'State Management', 'Offline Sync', 'Firebase Mobile'].map((t, i) => (
+                    <span key={i} className="px-2.5 py-1 rounded-full text-xs font-medium border border-border/70 bg-secondary/60 text-secondary-foreground">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </article>
+
+            {/* Domain 2: Cloud & Backend */}
+            <article className="relative overflow-hidden rounded-3xl border border-border/70 bg-card/90 p-7 shadow-lg hover:border-primary/40 transition-all duration-300 group">
+              <div className="flex items-center gap-3.5 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-primary/15 text-primary border border-primary/30 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                  <Server className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">Cloud Microservices & APIs</h3>
+                  <p className="text-xs text-muted-foreground">FastAPI • Node.js • Cloud Run • Docker</p>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+                High-concurrency backend services utilizing Python (FastAPI) and Node.js. Containerized with Docker and deployed to Google Cloud Run with automated memory caching, CORS management, and background tasks.
+              </p>
+
+              <div className="space-y-3 pt-3 border-t border-border/60">
+                <div className="text-xs">
+                  <span className="font-semibold text-foreground">Primary Deliverable: </span>
+                  <span className="text-primary font-medium">Google Cloud Run Microservices & Live ETL Sync</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {['FastAPI', 'Node.js', 'Python', 'Cloud Run', 'Docker', 'REST APIs', 'GraphQL Proxy', 'TTL Caching'].map((t, i) => (
+                    <span key={i} className="px-2.5 py-1 rounded-full text-xs font-medium border border-border/70 bg-secondary/60 text-secondary-foreground">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </article>
+
+            {/* Domain 3: Frontend & Web */}
+            <article className="relative overflow-hidden rounded-3xl border border-border/70 bg-card/90 p-7 shadow-lg hover:border-primary/40 transition-all duration-300 group">
+              <div className="flex items-center gap-3.5 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 text-cyan-500 border border-cyan-500/30 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                  <Globe className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">Reactive Web Systems</h3>
+                  <p className="text-xs text-muted-foreground">Next.js 15 • React • TypeScript • Tailwind</p>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+                Modern responsive web platforms leveraging Next.js App Router, React Server Components (RSC), and Tailwind CSS. Optimized for Core Web Vitals, dynamic OpenGraph metadata, and Schema.org knowledge graphs.
+              </p>
+
+              <div className="space-y-3 pt-3 border-t border-border/60">
+                <div className="text-xs">
+                  <span className="font-semibold text-foreground">Primary Deliverable: </span>
+                  <span className="text-primary font-medium">Hamro Ghar (Tenant-Web-App) & Portfolio Web</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {['Next.js 15', 'React', 'TypeScript', 'Tailwind CSS', 'Shadcn UI', 'SSR/SSG', 'Agentic SEO', 'PWA'].map((t, i) => (
+                    <span key={i} className="px-2.5 py-1 rounded-full text-xs font-medium border border-border/70 bg-secondary/60 text-secondary-foreground">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </article>
+
+            {/* Domain 4: Data & Systems */}
+            <article className="relative overflow-hidden rounded-3xl border border-border/70 bg-card/90 p-7 shadow-lg hover:border-primary/40 transition-all duration-300 group">
+              <div className="flex items-center gap-3.5 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                  <Database className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">Enterprise Systems & Data</h3>
+                  <p className="text-xs text-muted-foreground">PostgreSQL • MongoDB • Firebase • Java</p>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+                Relational schema design and document persistence across PostgreSQL, MongoDB, and Firebase. Applied algorithmic constraint optimization (genetic scheduling) and multi-tenant accounting invoice generation.
+              </p>
+
+              <div className="space-y-3 pt-3 border-t border-border/60">
+                <div className="text-xs">
+                  <span className="font-semibold text-foreground">Primary Deliverable: </span>
+                  <span className="text-primary font-medium">Invoice Generator & Automatic Timetable Engine</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {['PostgreSQL', 'MongoDB', 'Firebase Firestore', 'Core Java', 'Swing', 'Algorithms', 'PDF Generation'].map((t, i) => (
+                    <span key={i} className="px-2.5 py-1 rounded-full text-xs font-medium border border-border/70 bg-secondary/60 text-secondary-foreground">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        {/* Full-Stack Architecture System Flow Diagram */}
+        <section className="mt-16">
+          <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card/95 p-8 sm:p-10 shadow-xl backdrop-blur-xl">
+            <div className="flex items-center gap-2 mb-2 text-xs font-bold uppercase tracking-wider text-primary">
+              <Layers3 className="w-4 h-4 text-primary" />
+              Full-Stack System Architecture
+            </div>
+
+            <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
+              How the Tech Stack Connects & Executes
+            </h3>
+
+            <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mb-8 leading-relaxed">
+              Every technology in this profile serves a purposeful role in the multi-tier product lifecycle:
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Layer 1 */}
+              <div className="p-6 rounded-2xl border border-border/70 bg-background/70 space-y-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-indigo-500">Tier 1: Client Surfaces</span>
+                <h4 className="text-lg font-bold text-foreground">Mobile & Web Clients</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Cross-platform Flutter application (Android/iOS) and responsive Next.js 15 Web applications providing instantaneous reactive feedback.
+                </p>
+                <div className="flex flex-wrap gap-1 text-[11px] text-muted-foreground pt-1">
+                  <span className="px-2 py-0.5 rounded bg-muted">Flutter</span>
+                  <span className="px-2 py-0.5 rounded bg-muted">Kotlin</span>
+                  <span className="px-2 py-0.5 rounded bg-muted">Next.js 15</span>
+                  <span className="px-2 py-0.5 rounded bg-muted">TypeScript</span>
+                </div>
+              </div>
+
+              {/* Layer 2 */}
+              <div className="p-6 rounded-2xl border border-primary/30 bg-primary/5 space-y-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-primary">Tier 2: Business Logic</span>
+                <h4 className="text-lg font-bold text-foreground">Cloud Run Microservices</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  FastAPI and Node.js asynchronous backend services deployed to containerized Google Cloud Run. Handles validation, auth, and caching.
+                </p>
+                <div className="flex flex-wrap gap-1 text-[11px] text-primary pt-1">
+                  <span className="px-2 py-0.5 rounded bg-primary/10">FastAPI</span>
+                  <span className="px-2 py-0.5 rounded bg-primary/10">Python</span>
+                  <span className="px-2 py-0.5 rounded bg-primary/10">Node.js</span>
+                  <span className="px-2 py-0.5 rounded bg-primary/10">Docker</span>
+                </div>
+              </div>
+
+              {/* Layer 3 */}
+              <div className="p-6 rounded-2xl border border-border/70 bg-background/70 space-y-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">Tier 3: Persistence</span>
+                <h4 className="text-lg font-bold text-foreground">Databases & Integrations</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Real-time Firestore collections, PostgreSQL relational tables, and live Google Sheets API connectors with automated synchronization.
+                </p>
+                <div className="flex flex-wrap gap-1 text-[11px] text-muted-foreground pt-1">
+                  <span className="px-2 py-0.5 rounded bg-muted">Firestore</span>
+                  <span className="px-2 py-0.5 rounded bg-muted">PostgreSQL</span>
+                  <span className="px-2 py-0.5 rounded bg-muted">MongoDB</span>
+                  <span className="px-2 py-0.5 rounded bg-muted">Sheets API</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Call to action */}
+        <section className="mt-14 text-center space-y-4 pt-6">
+          <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">Looking to collaborate?</p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link 
+              href="/projects"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm shadow-md hover:shadow-lg transition-all"
+            >
+              <Code2 className="w-4 h-4" />
+              <span>View Shipped Projects</span>
+            </Link>
+            <Link 
+              href="/contact"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-border hover:border-primary/40 bg-card/50 text-foreground font-medium text-sm hover:bg-card transition-all"
+            >
+              <span>Get in Touch</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </section>
       </div>

@@ -1,28 +1,34 @@
 'use client';
 
-import React from "react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  ExternalLink, 
-  Code2, 
-  Github, 
-  FileText, 
-  Home, 
-  Gamepad2, 
-  Calendar, 
-  Globe, 
-  Layout, 
-  HeartHandshake, 
-  Laptop 
-} from "lucide-react";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { ServerWarmingScreen } from "@/components/ServerWarmingScreen";
-import { FALLBACK_PROFILE_DATA } from "@/lib/fallback-data";
-import { useApi } from "@/hooks/useApi";
+import React, { useState, useMemo } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  ExternalLink,
+  Code2,
+  Github,
+  FileText,
+  Home,
+  Gamepad2,
+  Calendar,
+  Globe,
+  Layout,
+  HeartHandshake,
+  Laptop,
+  Sparkles,
+  Smartphone,
+  Layers,
+  ArrowRight,
+  Info,
+} from 'lucide-react';
+import { FALLBACK_PROFILE_DATA } from '@/lib/fallback-data';
+import { useApi } from '@/hooks/useApi';
+import ProjectDetailModal, { ProjectDetailData } from '@/components/ProjectDetailModal';
 
 interface Project {
-  title: string;
+  title?: string;
+  name?: string;
   description: string;
   date_range?: string;
   url?: string;
@@ -30,413 +36,406 @@ interface Project {
   live_demo?: string;
   image?: string;
   technologies?: string[];
-  name?: string;
 }
 
-interface ProfileData {
-  basic_info: {
-    name: string;
-    headline: string;
-    location: string;
-    profile_image: string;
-  };
-  about: string;
-  experience: any[];
-  education: any[];
-  skills: string[];
-  projects: Project[];
-  certifications: any[];
+interface ProfileApiResponse {
+  projects?: Project[];
+  [key: string]: any;
 }
 
-async function getProfileData(): Promise<ProfileData> {
-  try {
-    // Get base API URL from env or use relative URL for custom domains
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
-    
-    // Add a timestamp to avoid caching issues
-    const timestamp = new Date().getTime();
-    const endpoint = `/api/profile/?t=${timestamp}`;
-    
-    console.log(`Projects page - Attempting to fetch profile data using relative URL: ${endpoint}`);
-    
-    // First try with relative URL (works with Next.js rewrites if on same domain)
-    try {
-      const res = await fetch(endpoint, {
-        next: { revalidate: 0 }, // Disable caching to ensure fresh data
-        cache: 'no-store'
-      });
-      
-      if (res.ok) {
-        console.log("Projects page - Successfully fetched profile data with relative URL");
-        const data = await res.json();
-        
-        // Validate that we have actual projects data
-        if (!data.projects || data.projects.length === 0) {
-          console.warn("No projects data found in API response");
-          // Return data with default projects array
-          return {
-            ...data,
-            projects: []
-          };
-        }
-        
-        // Log project data before mapping
-        console.log(`Projects page - Received ${data.projects.length} projects from API`);
-        data.projects.forEach((project: any, index: number) => {
-          console.log(`Project ${index + 1}:`, 
-            project.name ? `name: ${project.name}` : 'no name field',
-            project.title ? `title: ${project.title}` : 'no title field');
-        });
-        
-        // Process projects to enhance them with structured technologies
-        if (data.projects && data.projects.length > 0) {
-          data.projects = data.projects.map(enhanceProjectData);
-        }
-        
-        return data;
-      }
-    } catch (error) {
-      console.error("Projects page - Error fetching with relative URL:", error);
-    }
-    
-    // If relative URL fails and we have a backend URL, try direct fetch
-    if (apiUrl) {
-      console.log(`Projects page - Falling back to direct backend URL: ${apiUrl}/api/profile`);
-      const res = await fetch(`${apiUrl}/api/profile?t=${timestamp}`, {
-        next: { revalidate: 0 },
-        cache: 'no-store'
-      });
-      
-      if (!res.ok) {
-        throw new Error(`Failed to fetch profile data: ${res.status}`);
-      }
-      
-      const data = await res.json();
-      
-      // Validate that we have actual projects data
-      if (!data.projects || data.projects.length === 0) {
-        console.warn("No projects data found in API response");
-        // Return data with default projects array
-        return {
-          ...data,
-          projects: []
-        };
-      }
-      
-      // Log project data before mapping
-      console.log(`Projects page - Received ${data.projects.length} projects from API`);
-      data.projects.forEach((project: any, index: number) => {
-        console.log(`Project ${index + 1}:`, 
-          project.name ? `name: ${project.name}` : 'no name field',
-          project.title ? `title: ${project.title}` : 'no title field');
-      });
-      
-      // Process projects to enhance them with structured technologies
-      if (data.projects && data.projects.length > 0) {
-        data.projects = data.projects.map(enhanceProjectData);
-      }
-      
-      return data;
-    } else {
-      throw new Error("No API URL available and relative URL failed");
-    }
-  } catch (error) {
-    console.error("Projects page - Error fetching profile data:", error);
-    return getDefaultProfileData();
-  }
-}
-
-function getDefaultProfileData(): ProfileData {
-  return {
-    basic_info: {
-      name: FALLBACK_PROFILE_DATA.basic_info.name,
-      headline: FALLBACK_PROFILE_DATA.basic_info.headline,
-      location: FALLBACK_PROFILE_DATA.basic_info.location,
-      profile_image: "/images/01.png",
-    },
-    about: FALLBACK_PROFILE_DATA.basic_info.about || "",
-    experience: FALLBACK_PROFILE_DATA.experience || [],
-    education: FALLBACK_PROFILE_DATA.education || [],
-    skills: (FALLBACK_PROFILE_DATA.skills as any)?.technical || [],
-    projects: (FALLBACK_PROFILE_DATA.projects as Project[]) || [],
-    certifications: []
-  };
-}
-
-// Function to enhance project data by extracting technologies from description
-function enhanceProjectData(project: Project): Project {
-  // Map project.name to project.title if title is missing but name exists
-  const enhancedProject = { ...project };
-  
-  // If project has name but no title, use name as title
-  if (!enhancedProject.title && enhancedProject.name) {
-    enhancedProject.title = enhancedProject.name;
-    console.log(`Mapped project name to title: ${enhancedProject.title}`);
-  }
-  
-  // Add technologies if not already present
-  if (!enhancedProject.technologies) {
-    enhancedProject.technologies = extractTechnologiesFromDescription(enhancedProject.description);
-  }
-  
-  return enhancedProject;
-}
-
-// Function to extract technologies from project description
-function extractTechnologiesFromDescription(description: string): string[] {
-  // Common tech keywords to look for
-  const techKeywords = [
-    "React", "JavaScript", "TypeScript", "Next.js", "Node.js", "Express", 
-    "MongoDB", "PostgreSQL", "MySQL", "Python", "Django", "Flask", "FastAPI",
-    "AWS", "Docker", "Kubernetes", "GraphQL", "REST", "API", "Vue.js", "Angular",
-    "CSS", "SCSS", "SASS", "HTML", "Tailwind", "Bootstrap", "Material UI", "Redux",
-    "Firebase", "Heroku", "Vercel", "Netlify", "Git", "GitHub", "CI/CD", "Testing"
-  ];
-  
-  if (!description) return [];
-  
-  // Extract technologies mentioned in the description
-  return techKeywords.filter(tech => 
-    description.toLowerCase().includes(tech.toLowerCase())
-  );
-}
-
+// Visual generator for projects missing screenshots
 function getProjectVisual(title: string) {
   const lower = title.toLowerCase();
   if (lower.includes('invoice')) {
     return {
       Icon: FileText,
-      gradient: 'from-amber-500/20 via-orange-500/10 to-transparent',
+      gradient: 'from-amber-500/25 via-orange-500/10 to-transparent',
       badge: 'Desktop App • Java',
       accentColor: 'text-amber-500',
+      category: 'enterprise',
     };
   }
   if (lower.includes('tenant') || lower.includes('ghar')) {
     return {
       Icon: Home,
-      gradient: 'from-emerald-500/20 via-teal-500/10 to-transparent',
+      gradient: 'from-emerald-500/25 via-teal-500/10 to-transparent',
       badge: 'Full-Stack Web App',
       accentColor: 'text-emerald-500',
+      category: 'web',
     };
   }
   if (lower.includes('chess') || lower.includes('knight')) {
     return {
       Icon: Gamepad2,
-      gradient: 'from-purple-500/20 via-indigo-500/10 to-transparent',
+      gradient: 'from-purple-500/25 via-indigo-500/10 to-transparent',
       badge: 'Algorithm & Strategy Game',
       accentColor: 'text-purple-500',
+      category: 'games',
     };
   }
-  if (lower.includes("fall") || lower.includes("game")) {
+  if (lower.includes('fall') || lower.includes('game')) {
     return {
       Icon: Gamepad2,
-      gradient: 'from-pink-500/20 via-rose-500/10 to-transparent',
+      gradient: 'from-pink-500/25 via-rose-500/10 to-transparent',
       badge: 'Unity Game • Android/PC',
       accentColor: 'text-pink-500',
+      category: 'games',
     };
   }
   if (lower.includes('timetable') || lower.includes('schedule')) {
     return {
       Icon: Calendar,
-      gradient: 'from-blue-500/20 via-cyan-500/10 to-transparent',
+      gradient: 'from-blue-500/25 via-cyan-500/10 to-transparent',
       badge: 'Research & Genetic Algorithm',
       accentColor: 'text-blue-500',
-    };
-  }
-  if (lower.includes('browser') || lower.includes('nidhi')) {
-    return {
-      Icon: Globe,
-      gradient: 'from-cyan-500/20 via-sky-500/10 to-transparent',
-      badge: 'Android Browser • Java',
-      accentColor: 'text-cyan-500',
-    };
-  }
-  if (lower.includes('parallax') || lower.includes('website')) {
-    return {
-      Icon: Layout,
-      gradient: 'from-violet-500/20 via-fuchsia-500/10 to-transparent',
-      badge: 'Responsive Web Design',
-      accentColor: 'text-violet-500',
+      category: 'research',
     };
   }
   if (lower.includes('care') || lower.includes('nest')) {
     return {
       Icon: HeartHandshake,
-      gradient: 'from-primary/25 via-primary/10 to-transparent',
+      gradient: 'from-primary/30 via-indigo-500/15 to-transparent',
       badge: 'Healthcare & NDIS SaaS',
       accentColor: 'text-primary',
+      category: 'mobile',
     };
   }
 
   return {
     Icon: Laptop,
-    gradient: 'from-primary/20 via-accent-foreground/10 to-transparent',
+    gradient: 'from-primary/20 via-accent/10 to-transparent',
     badge: 'Software Engineering',
     accentColor: 'text-primary',
+    category: 'web',
   };
 }
 
-function ProjectCover({ title }: { title: string }) {
-  const visual = getProjectVisual(title);
-  const IconComponent = visual.Icon;
-
-  return (
-    <div
-      className={`relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-br ${visual.gradient}`}
-      aria-hidden="true"
-    >
-      <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-15 pointer-events-none" />
-      <div className="relative z-10 flex flex-col items-center justify-center gap-2.5 p-4 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border/80 bg-background/85 shadow-md backdrop-blur-sm group-hover:scale-110 transition-transform duration-300">
-          <IconComponent className={`h-7 w-7 ${visual.accentColor}`} />
-        </div>
-        <span className="text-xs font-semibold text-foreground/80 tracking-wide px-2.5 py-0.5 rounded-full bg-background/60 border border-border/60 backdrop-blur-sm">
-          {visual.badge}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function ProjectCard({ project, index }: { project: Project; index: number }) {
-  const title = project.title || project.name || "Project";
-  const repository = project.repository || (project.url?.includes("github.com") ? project.url : undefined);
-  const liveDemo = project.live_demo;
-  const [imageFailed, setImageFailed] = React.useState(false);
-
-  return (
-    <Card
-      key={index}
-      className="group flex flex-col overflow-hidden rounded-[1.75rem] border-border/70 bg-card/95 shadow-[0_18px_50px_rgba(20,24,62,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_22px_60px_rgba(20,24,62,0.12)]"
-    >
-      {/* Media header: project image from the sheet, rich cover fallback */}
-      <div className="relative h-44 w-full overflow-hidden border-b border-border/60">
-        {project.image && !imageFailed ? (
-          <img
-            src={project.image}
-            alt={`${title} preview`}
-            loading="lazy"
-            onError={() => setImageFailed(true)}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <ProjectCover title={title} />
-        )}
-        {project.date_range && (
-          <span className="absolute right-3 top-3 rounded-full border border-border/70 bg-background/85 px-3 py-1 text-xs text-muted-foreground shadow-sm backdrop-blur">
-            {project.date_range}
-          </span>
-        )}
-      </div>
-
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl transition-colors group-hover:text-primary">{title}</CardTitle>
-      </CardHeader>
-
-      <CardContent className="flex grow flex-col">
-        <p className="mb-4 line-clamp-5 grow text-sm leading-7 text-muted-foreground">
-          {project.description}
-        </p>
-
-        {project.technologies && project.technologies.length > 0 && (
-          <div className="mb-4 flex flex-wrap gap-2">
-            {project.technologies.map((tech, techIndex) => (
-              <Badge
-                key={techIndex}
-                variant="outline"
-                className="rounded-full border-border/70 px-2.5 py-0.5 text-xs text-muted-foreground"
-              >
-                {tech}
-              </Badge>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-auto flex flex-wrap items-center gap-3">
-          {repository && (
-            <a
-              href={repository}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
-            >
-              <Github className="h-4 w-4" />
-              Repository
-            </a>
-          )}
-
-          {liveDemo && (
-            <a
-              href={liveDemo}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/85 px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
-            >
-              <ExternalLink className="h-4 w-4" />
-              Live Demo
-            </a>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
+function extractTech(project: Project): string[] {
+  if (project.technologies && project.technologies.length > 0) {
+    return project.technologies;
+  }
+  const desc = (project.description || '').toLowerCase();
+  const candidates = [
+    'Flutter', 'Kotlin', 'Android', 'iOS', 'React', 'Next.js', 'Node.js',
+    'Express', 'MongoDB', 'Java', 'Python', 'FastAPI', 'Firebase', 'Cloud Run',
+    'Unity', 'C#', 'Genetic Algorithms', 'Docker', 'PostgreSQL',
+  ];
+  return candidates.filter((tech) => desc.includes(tech.toLowerCase()));
 }
 
 export default function ProjectsPage() {
-  const { data: profileData, error, isLoading, isWarming } = useApi<ProfileData>('/profile');
-  
-  // Process projects to enhance them with structured technologies, using fallback if needed
-  const projects = React.useMemo(() => {
-    const rawProjects = (profileData?.projects && profileData.projects.length > 0)
-      ? profileData.projects
-      : (error ? (FALLBACK_PROFILE_DATA.projects as any[]) : []);
-    
-    if (!rawProjects || rawProjects.length === 0) {
-      return [];
-    }
-    
-    return rawProjects.map(enhanceProjectData);
-  }, [profileData?.projects, error]);
+  const { data: profileData } = useApi<ProfileApiResponse>('/profile');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [activeModalProject, setActiveModalProject] = useState<ProjectDetailData | null>(null);
 
-  if (isWarming && (!projects || projects.length === 0)) {
-    return <ServerWarmingScreen title="Waking Up Server & Loading Projects" />;
-  }
+  // Guarantee projects are NEVER empty (robust fallback)
+  const allProjects = useMemo(() => {
+    const raw = (profileData?.projects && profileData.projects.length > 0)
+      ? profileData.projects
+      : (FALLBACK_PROFILE_DATA.projects as Project[]);
+
+    return raw.map((p) => {
+      const title = p.title || p.name || 'Project';
+      const visual = getProjectVisual(title);
+      return {
+        ...p,
+        title,
+        name: title,
+        technologies: extractTech(p),
+        category: visual.category,
+      };
+    });
+  }, [profileData]);
+
+  // Find flagship project (CareNest)
+  const flagshipProject = useMemo(() => {
+    return allProjects.find((p) => p.title.toLowerCase().includes('care') || p.title.toLowerCase().includes('nest')) || allProjects[0];
+  }, [allProjects]);
+
+  // Other projects (excluding the flagship spotlight if displayed separately)
+  const filteredProjects = useMemo(() => {
+    if (selectedCategory === 'all') {
+      return allProjects;
+    }
+    return allProjects.filter((p) => (p as any).category === selectedCategory);
+  }, [allProjects, selectedCategory]);
+
+  const categories = [
+    { id: 'all', label: 'All Projects', count: allProjects.length },
+    { id: 'mobile', label: 'Mobile Apps', count: allProjects.filter((p: any) => p.category === 'mobile').length },
+    { id: 'web', label: 'Full-Stack Web', count: allProjects.filter((p: any) => p.category === 'web').length },
+    { id: 'enterprise', label: 'Enterprise Systems', count: allProjects.filter((p: any) => p.category === 'enterprise').length },
+    { id: 'games', label: 'Games & Algorithms', count: allProjects.filter((p: any) => p.category === 'games' || p.category === 'research').length },
+  ];
 
   return (
-    <div className="container mx-auto px-4 py-12 md:py-16">
-      <div className="flex flex-col items-center mb-12">
-        <div className="inline-flex items-center justify-center p-1 px-3 mb-4 border border-accent-foreground/30 rounded-full bg-accent-foreground/5 text-accent-foreground text-sm font-medium">
-          <Code2 className="w-4 h-4 mr-2" />
-          Featured Work
-        </div>
-        <h1 className="text-3xl md:text-4xl font-bold text-center text-foreground mb-4">
-          My Projects
-        </h1>
-        <div className="w-20 h-1 bg-accent-foreground rounded-full"></div>
-        <p className="text-muted-foreground max-w-2xl mx-auto mt-4 text-center">
-          Here are some of the projects I've worked on. Each project represents a unique 
-          challenge and demonstrates different aspects of my technical skills.
-        </p>
-      </div>
+    <div className="relative min-h-screen bg-background py-14 sm:py-20 overflow-hidden">
+      {/* Background Ambience */}
+      <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10 pointer-events-none" />
+      <div className="absolute -top-40 right-10 w-96 h-96 bg-primary/10 rounded-full filter blur-3xl opacity-30 pointer-events-none" />
+      <div className="absolute top-1/2 left-0 w-80 h-80 bg-accent/15 rounded-full filter blur-3xl opacity-20 pointer-events-none" />
 
-      {isLoading && projects.length === 0 ? (
-        <div className="flex justify-center items-center min-h-[400px]">
-          <LoadingSpinner size="large" showText />
-        </div>
-      ) : projects.length === 0 ? (
-        <div className="text-center p-8 border border-border rounded-lg">
-          <h3 className="text-xl font-medium mb-2">No Projects Found</h3>
-          <p className="text-muted-foreground">
-            There are currently no projects to display.
+      <div className="container relative z-10 mx-auto px-4 max-w-6xl">
+        {/* Header */}
+        <div className="flex flex-col items-center text-center mb-14">
+          <Badge className="px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.24em] rounded-full border border-primary/30 bg-primary/10 text-primary mb-4">
+            <Code2 className="w-3.5 h-3.5 mr-1.5" />
+            Engineering Portfolio
+          </Badge>
+
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground mb-5">
+            Featured Projects & <span className="text-primary">Systems</span>
+          </h1>
+
+          <p className="max-w-2xl text-base sm:text-lg text-muted-foreground leading-relaxed">
+            Real-world applications delivered across mobile (Flutter, Kotlin), scalable microservices, and modern web platforms.
           </p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project, index) => (
-            <ProjectCard key={project.name || index} project={project} index={index} />
-          ))}
+
+        {/* Flagship Spotlight Card: CareNest */}
+        {flagshipProject && (
+          <div className="mb-16">
+            <div className="flex items-center gap-2 mb-4 text-xs font-bold uppercase tracking-wider text-primary">
+              <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+              Flagship Production Build
+            </div>
+
+            <div className="relative overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-card/95 via-card/85 to-primary/5 p-6 sm:p-10 shadow-2xl backdrop-blur-xl group hover:border-primary/50 transition-all duration-300">
+              <div className="absolute -top-24 -right-24 w-80 h-80 bg-primary/15 rounded-full filter blur-3xl group-hover:scale-110 transition-transform duration-500" />
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+                <div className="lg:col-span-7 space-y-5">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                      Live in Production
+                    </span>
+                    <Badge variant="outline" className="border-border text-xs text-muted-foreground">
+                      NDIS Healthcare SaaS
+                    </Badge>
+                  </div>
+
+                  <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">
+                    {flagshipProject.title}
+                  </h2>
+
+                  <p className="text-muted-foreground text-base sm:text-lg leading-relaxed">
+                    {flagshipProject.description}
+                  </p>
+
+                  {/* Highlights Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+                    <div className="p-3 rounded-2xl border border-border/70 bg-background/60 backdrop-blur-sm">
+                      <p className="text-xs text-muted-foreground font-medium">Architecture</p>
+                      <p className="text-sm font-semibold text-foreground">Multi-Tenant</p>
+                    </div>
+                    <div className="p-3 rounded-2xl border border-border/70 bg-background/60 backdrop-blur-sm">
+                      <p className="text-xs text-muted-foreground font-medium">Client Target</p>
+                      <p className="text-sm font-semibold text-foreground">Flutter + Cloud Run</p>
+                    </div>
+                    <div className="p-3 rounded-2xl border border-border/70 bg-background/60 backdrop-blur-sm col-span-2 sm:col-span-1">
+                      <p className="text-xs text-muted-foreground font-medium">Compliance</p>
+                      <p className="text-sm font-semibold text-foreground">NDIS Price Guide</p>
+                    </div>
+                  </div>
+
+                  {/* Technologies */}
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {flagshipProject.technologies?.map((tech, idx) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1 rounded-full text-xs font-medium border border-primary/20 bg-primary/10 text-primary"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap gap-3 pt-3">
+                    {flagshipProject.live_demo && (
+                      <Button asChild size="default" className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-md">
+                        <a href={flagshipProject.live_demo} target="_blank" rel="noopener noreferrer">
+                          <Smartphone className="w-4 h-4 mr-2" />
+                          Google Play Store
+                        </a>
+                      </Button>
+                    )}
+
+                    {flagshipProject.repository && (
+                      <Button asChild variant="outline" size="default" className="rounded-full border-border hover:border-primary/40">
+                        <a href={flagshipProject.repository} target="_blank" rel="noopener noreferrer">
+                          <Github className="w-4 h-4 mr-2" />
+                          GitHub Repo
+                        </a>
+                      </Button>
+                    )}
+
+                    <Button
+                      variant="ghost"
+                      size="default"
+                      className="rounded-full text-muted-foreground hover:text-foreground"
+                      onClick={() => setActiveModalProject(flagshipProject)}
+                    >
+                      <Info className="w-4 h-4 mr-2" />
+                      Deep Dive
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Visual Cover Preview */}
+                <div className="lg:col-span-5 flex justify-center">
+                  <div className="w-full max-w-sm aspect-square rounded-3xl border border-border/80 bg-gradient-to-br from-primary/20 via-background/80 to-accent/20 p-6 flex flex-col items-center justify-center text-center shadow-inner relative group/cover overflow-hidden">
+                    <div className="w-24 h-24 rounded-3xl bg-background border border-border/80 shadow-xl flex items-center justify-center mb-4 group-hover/cover:scale-105 transition-transform duration-300">
+                      <HeartHandshake className="w-12 h-12 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-bold text-foreground mb-1">CareNest Platform</h3>
+                    <p className="text-xs text-muted-foreground max-w-xs">
+                      Mobile timesheets, progress notes, and automated NDIS bulk invoicing engine
+                    </p>
+                    <div className="mt-4 inline-flex items-center text-xs font-semibold text-primary gap-1">
+                      Explore Architecture <ArrowRight className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Category Filter Tabs */}
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
+          {categories.map((cat) => {
+            const isActive = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
+                  isActive
+                    ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105'
+                    : 'bg-card border border-border/70 text-muted-foreground hover:text-foreground hover:border-primary/40'
+                }`}
+              >
+                {cat.label}
+                <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${isActive ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                  {cat.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
-      )}
+
+        {/* Project Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          {filteredProjects.map((project, index) => {
+            const visual = getProjectVisual(project.title);
+            const Icon = visual.Icon;
+            const repo = project.repository || (project.url?.includes('github.com') ? project.url : undefined);
+
+            return (
+              <Card
+                key={project.name || index}
+                className="group flex flex-col overflow-hidden rounded-3xl border border-border/70 bg-card/90 shadow-lg hover:shadow-2xl hover:border-primary/40 transition-all duration-300 hover:-translate-y-1.5"
+              >
+                {/* Media Header */}
+                <div
+                  className={`relative h-44 w-full overflow-hidden bg-gradient-to-br ${visual.gradient} border-b border-border/60 flex items-center justify-center cursor-pointer`}
+                  onClick={() => setActiveModalProject(project)}
+                >
+                  <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-15 pointer-events-none" />
+                  <div className="relative z-10 flex flex-col items-center gap-2">
+                    <div className="w-14 h-14 rounded-2xl border border-border/80 bg-background/85 shadow-md flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <Icon className={`w-7 h-7 ${visual.accentColor}`} />
+                    </div>
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-background/70 border border-border/60 text-foreground/80 backdrop-blur-sm">
+                      {visual.badge}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Card Body */}
+                <CardContent className="flex flex-1 flex-col p-6 space-y-4">
+                  <div className="flex-1 space-y-2">
+                    <h3
+                      className="text-xl font-bold text-foreground group-hover:text-primary transition-colors cursor-pointer"
+                      onClick={() => setActiveModalProject(project)}
+                    >
+                      {project.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                      {project.description}
+                    </p>
+                  </div>
+
+                  {/* Tech Stack Pills */}
+                  {project.technologies && project.technologies.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {project.technologies.slice(0, 4).map((tech, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2.5 py-0.5 rounded-full text-xs font-medium border border-border/60 bg-muted/50 text-muted-foreground"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                      {project.technologies.length > 4 && (
+                        <span className="text-xs text-muted-foreground/70 self-center">
+                          +{project.technologies.length - 4}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Footer Actions */}
+                  <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-2">
+                    <button
+                      onClick={() => setActiveModalProject(project)}
+                      className="text-xs font-semibold text-primary hover:underline inline-flex items-center"
+                    >
+                      Inspect <ArrowRight className="w-3 h-3 ml-1" />
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                      {repo && (
+                        <a
+                          href={repo}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 rounded-full border border-border/80 bg-background hover:bg-accent/20 text-foreground transition-colors"
+                          aria-label="GitHub Repository"
+                          title="View Repository"
+                        >
+                          <Github className="w-4 h-4" />
+                        </a>
+                      )}
+
+                      {project.live_demo && (
+                        <a
+                          href={project.live_demo}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          aria-label="Live Demo"
+                          title="View Live Demo"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Modal Dialog */}
+      <ProjectDetailModal
+        project={activeModalProject}
+        onClose={() => setActiveModalProject(null)}
+      />
     </div>
   );
-} 
+}

@@ -14,6 +14,17 @@
   animation: fadeIn 0.8s ease-in-out;
 }
 
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+}
+
 /* Custom shimmer animation for loading states */
 @keyframes shimmer {
   0% {
